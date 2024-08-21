@@ -11,17 +11,17 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // compute_test_statistic
-double compute_test_statistic(NumericVector a, NumericVector w, NumericMatrix D, const std::vector<int>& trt_idxs, int n_trt);
-RcppExport SEXP _robustDESeq_compute_test_statistic(SEXP aSEXP, SEXP wSEXP, SEXP DSEXP, SEXP trt_idxsSEXP, SEXP n_trtSEXP) {
+double compute_test_statistic(NumericVector a, NumericVector w, List D_list, const std::vector<int>& trt_idxs, int n_trt);
+RcppExport SEXP _robustDESeq_compute_test_statistic(SEXP aSEXP, SEXP wSEXP, SEXP D_listSEXP, SEXP trt_idxsSEXP, SEXP n_trtSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericVector >::type a(aSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type w(wSEXP);
-    Rcpp::traits::input_parameter< NumericMatrix >::type D(DSEXP);
+    Rcpp::traits::input_parameter< List >::type D_list(D_listSEXP);
     Rcpp::traits::input_parameter< const std::vector<int>& >::type trt_idxs(trt_idxsSEXP);
     Rcpp::traits::input_parameter< int >::type n_trt(n_trtSEXP);
-    rcpp_result_gen = Rcpp::wrap(compute_test_statistic(a, w, D, trt_idxs, n_trt));
+    rcpp_result_gen = Rcpp::wrap(compute_test_statistic(a, w, D_list, trt_idxs, n_trt));
     return rcpp_result_gen;
 END_RCPP
 }

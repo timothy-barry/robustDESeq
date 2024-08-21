@@ -43,12 +43,12 @@
 #' mean(under_null[robust_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
 run_robust_nb_regression <- function(Y_list, x, Z, h = 15L, alpha = 0.1, theta = NULL) {
   # perform the precomputation on each y vector
-  system.time(precomp_list <- lapply(X = Y_list, FUN = function(y) {
+  system.time({precomp_list <- lapply(X = Y_list, FUN = function(y) {
     # fit the GLM
     fit <- MASS::glm.nb(y ~ Z)
     # compute the precomputation pieces
     compute_precomputation_pieces(fit)
-  }))
+  })})
   # run the permutation test
   system.time(result <- run_adaptive_permutation_test(precomp_list, x, h, alpha))
   df <- data.frame(p_value = result$p_values,
@@ -74,8 +74,8 @@ compute_precomputation_pieces <- function(fit) {
   U <- P_decomp$vectors
   Lambda_minus_half <- 1 / sqrt(P_decomp$values)
   D <- (Lambda_minus_half * t(U)) %*% t(wZ)
-  # D_list <- apply(D, 1L, function(row) row, simplify = FALSE)
-  out <- list(a = a, w = w, D = D)
+  D_list <- apply(D, 1L, function(row) row, simplify = FALSE)
+  out <- list(a = a, w = w, D_list = D_list)
   return(out)
 }
 

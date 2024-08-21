@@ -6,15 +6,17 @@
 using namespace Rcpp;
 
 // [[Rcpp::export]]
-double compute_test_statistic(NumericVector a, NumericVector w, NumericMatrix D, const std::vector<int>& trt_idxs, int n_trt) {
+double compute_test_statistic(NumericVector a, NumericVector w, List D_list, const std::vector<int>& trt_idxs, int n_trt) {
   double lower_right = 0, lower_left = 0, top = 0, inner_sum;
-  int D_nrow = D.nrow();
+  int D_nrow = D_list.length();
+  NumericVector x;
 
   // iterate over the rows of D
   for (int i = 0; i < D_nrow; i ++) {
     inner_sum = 0;
+    x = D_list(i);
     for (int j = 0; j < n_trt; j ++) {
-      inner_sum += D(i, trt_idxs[j]);
+      inner_sum += x[trt_idxs[j]];
     }
     lower_right += inner_sum * inner_sum;
   }
