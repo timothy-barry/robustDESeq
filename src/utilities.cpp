@@ -3,11 +3,11 @@
 #include <cmath>
 using namespace Rcpp;
 
-void generate_wor_sample(boost::random::mt19937& generator,
-                         boost::random::uniform_real_distribution<double>& distribution,
-                         const std::vector<double>& i_doub_array,
-                         std::vector<int>& random_samp,
-                         int n_trt, double n_doub) {
+void draw_wor_sample(boost::random::mt19937& generator,
+                     boost::random::uniform_real_distribution<double>& distribution,
+                     const std::vector<double>& i_doub_array,
+                     std::vector<int>& random_samp,
+                     int n_trt, double n_doub) {
   double u;
   int pos;
   for (int i = 0; i < n_trt; i++) {
@@ -30,7 +30,7 @@ std::vector<std::vector<int>> generate_wor_sample_test(int n, int n_trt, int n_s
   for (int i = 0; i < n_trt; i++) i_doub_array[i] = static_cast<double>(i);
   for (int i = 0; i < n; i++) random_samp[i] = i;
   for (int i = 0; i < n_samples; i ++) {
-    generate_wor_sample(generator, distribution, i_doub_array, random_samp, n_trt, n_doub);
+    draw_wor_sample(generator, distribution, i_doub_array, random_samp, n_trt, n_doub);
     out[i] = std::vector<int>(random_samp.begin(), random_samp.begin() + n_trt);
   }
   return out;

@@ -1,8 +1,5 @@
-/*
 #include <Rcpp.h>
 #include <boost/random.hpp>
-#include <boost/math/distributions/binomial.hpp>
-using boost::math::binomial;
 #include <stdexcept>
 #include <algorithm>
 #include "utilities.h"
@@ -36,17 +33,16 @@ double compute_test_statistic(NumericVector a, NumericVector w, NumericMatrix D,
 // [[Rcpp::export]]
 List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int h, double alpha) {
   // define variables and objects
-  int n = x.length(), m = precomp_list.length(), max_n_losses_active_set;
+  int n = x.length(), m = precomp_list.length(), max_n_losses_active_set, n_trt;
   std::vector<bool> active_set(m, true), futility_set(m, false), rejected_set(m, false);
   std::vector<double> stop_times(m), original_statistics(m), p_values(m);
-  std::vector<int> n_losses(m, 0);
+  std::vector<int> n_losses(m, 0), trt_idxs;
   double curr_test_stat, t = 0, h_doub = static_cast<double>(h), m_doub = static_cast<double>(m), threshold, n_in_active_set;
   List curr_precomp;
 
   // populate the trt_idxs vector
-  std::vector<int> trt_idxs;
   for (int i = 0; i < x.length(); i++) if (x[i] == 1) trt_idxs.push_back(i);
-  int n_trt = trt_idxs.size();
+  n_trt = trt_idxs.size();
   if (n_trt == 0) throw std::invalid_argument("Zero treatment units.");
 
   // compute the original test statistics
@@ -56,22 +52,20 @@ List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int h, do
   }
 
   // define objects related to random permutations
-  std::vector<int> random_samp(n);
   boost::random::mt19937 generator(4);
   boost::random::uniform_real_distribution<double> distribution(0, 1);
+  double n_doub = static_cast<double>(n);
   std::vector<double> i_doub_array(n_trt);
-  for (int i = 0; i < n_trt; i ++) i_doub_array[i] = static_cast<double>(i);
+  for (int i = 0; i < n_trt; i++) i_doub_array[i] = static_cast<double>(i);
+  std::vector<int> random_samp(n);
+  for (int i = 0; i < n; i++) random_samp[i] = i;
 
   // iterate through time
-  // for (int k = 0; k < 50000; k++) {
-  for (int k = 0; k < 500; k++) {
+  for (int k = 0; k < 50000; k++) {
     // increment time
     t++;
     // generate a random permutation
-    draw_wor_sample(generator, distribution, i_doub_array, random_samp, n, n_trt);
-    for (int j = 0; j < n; j ++) Rcout << random_samp[j] << " ";
-    Rcout << "\n";
-
+    draw_wor_sample(generator, distribution, i_doub_array, random_samp, n_trt, n_doub);
     // iterate over hypotheses
     for (int i = 0; i < m; i ++) {
       // if in the active set, compute the test statistic and update gamma
@@ -121,4 +115,3 @@ List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int h, do
   return List::create(Named("p_values") = p_values,
                       Named("rejected") = rejected_set);
 }
-*/

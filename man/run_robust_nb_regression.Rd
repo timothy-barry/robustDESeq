@@ -23,8 +23,8 @@ Run robust NB regression
 ############################
 # GENERATE MULTIPLE DATASETS
 ############################
-n <- 100
-m <- 100L
+n <- 1000L
+m <- 500L
 x <- rbinom(n = n, size = 1, prob = 0.25)
 Z <- MASS::mvrnorm(n = n, mu = c(-0.5, 0.5), Sigma = toeplitz(c(1, 0.5)))
 colnames(Z) <- c("1", "2")
@@ -33,7 +33,7 @@ design_matrix <- cbind(x, Z)
 colnames(design_matrix) <- c("x", "z1", "z2")
 null_coefs <- log(c(7, 1.0, 0.8, 1.1))
 alt_coefs <- log(c(7, 1.3, 0.8, 1.1))
-under_null <- sample(size = m, c(TRUE, FALSE), replace = TRUE, prob = c(0.9, 0.1))
+under_null <- sample(size = m, c(TRUE, FALSE), replace = TRUE, prob = c(0.95, 0.05))
 Y_list <- sapply(X = seq_len(m), FUN = function(i) {
   generate_glm_data(design_matrix = design_matrix,
   coefficients = if (under_null[i]) null_coefs else alt_coefs,

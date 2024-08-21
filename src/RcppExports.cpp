@@ -10,6 +10,35 @@ Rcpp::Rostream<true>&  Rcpp::Rcout = Rcpp::Rcpp_cout_get();
 Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
+// compute_test_statistic
+double compute_test_statistic(NumericVector a, NumericVector w, NumericMatrix D, const std::vector<int>& trt_idxs, int n_trt);
+RcppExport SEXP _robustDESeq_compute_test_statistic(SEXP aSEXP, SEXP wSEXP, SEXP DSEXP, SEXP trt_idxsSEXP, SEXP n_trtSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< NumericVector >::type a(aSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type w(wSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type D(DSEXP);
+    Rcpp::traits::input_parameter< const std::vector<int>& >::type trt_idxs(trt_idxsSEXP);
+    Rcpp::traits::input_parameter< int >::type n_trt(n_trtSEXP);
+    rcpp_result_gen = Rcpp::wrap(compute_test_statistic(a, w, D, trt_idxs, n_trt));
+    return rcpp_result_gen;
+END_RCPP
+}
+// run_adaptive_permutation_test
+List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int h, double alpha);
+RcppExport SEXP _robustDESeq_run_adaptive_permutation_test(SEXP precomp_listSEXP, SEXP xSEXP, SEXP hSEXP, SEXP alphaSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type precomp_list(precomp_listSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type h(hSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    rcpp_result_gen = Rcpp::wrap(run_adaptive_permutation_test(precomp_list, x, h, alpha));
+    return rcpp_result_gen;
+END_RCPP
+}
 // generate_wor_sample_test
 std::vector<std::vector<int>> generate_wor_sample_test(int n, int n_trt, int n_samples);
 RcppExport SEXP _robustDESeq_generate_wor_sample_test(SEXP nSEXP, SEXP n_trtSEXP, SEXP n_samplesSEXP) {
@@ -25,6 +54,8 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_robustDESeq_compute_test_statistic", (DL_FUNC) &_robustDESeq_compute_test_statistic, 5},
+    {"_robustDESeq_run_adaptive_permutation_test", (DL_FUNC) &_robustDESeq_run_adaptive_permutation_test, 4},
     {"_robustDESeq_generate_wor_sample_test", (DL_FUNC) &_robustDESeq_generate_wor_sample_test, 3},
     {NULL, NULL, 0}
 };

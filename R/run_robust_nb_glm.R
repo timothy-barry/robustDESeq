@@ -11,8 +11,8 @@
 #' ############################
 #' # GENERATE MULTIPLE DATASETS
 #' ############################
-#' n <- 100
-#' m <- 100L
+#' n <- 1000L
+#' m <- 500L
 #' x <- rbinom(n = n, size = 1, prob = 0.25)
 #' Z <- MASS::mvrnorm(n = n, mu = c(-0.5, 0.5), Sigma = toeplitz(c(1, 0.5)))
 #' colnames(Z) <- c("1", "2")
@@ -21,7 +21,7 @@
 #' colnames(design_matrix) <- c("x", "z1", "z2")
 #' null_coefs <- log(c(7, 1.0, 0.8, 1.1))
 #' alt_coefs <- log(c(7, 1.3, 0.8, 1.1))
-#' under_null <- sample(size = m, c(TRUE, FALSE), replace = TRUE, prob = c(0.9, 0.1))
+#' under_null <- sample(size = m, c(TRUE, FALSE), replace = TRUE, prob = c(0.95, 0.05))
 #' Y_list <- sapply(X = seq_len(m), FUN = function(i) {
 #'   generate_glm_data(design_matrix = design_matrix,
 #'   coefficients = if (under_null[i]) null_coefs else alt_coefs,
@@ -43,18 +43,17 @@
 #' mean(under_null[robust_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
 run_robust_nb_regression <- function(Y_list, x, Z, h = 15L, alpha = 0.1, theta = NULL) {
   # perform the precomputation on each y vector
-  precomp_list <- lapply(X = Y_list, FUN = function(y) {
+  system.time(precomp_list <- lapply(X = Y_list, FUN = function(y) {
     # fit the GLM
     fit <- MASS::glm.nb(y ~ Z)
     # compute the precomputation pieces
     compute_precomputation_pieces(fit)
-  })
+  }))
   # run the permutation test
-  result <- run_adaptive_permutation_test(precomp_list, x, h, alpha)
-  # result <- run_adaptive_permutation_test(precomp_list, x, h, alpha)
-  #df <- data.frame(p_value = result$p_values,
-  #                 rejected = result$rejected,
-  #                 hyp_idx = seq_len(m)) |> dplyr::arrange(p_value)
+  system.time(result <- run_adaptive_permutation_test(precomp_list, x, h, alpha))
+  df <- data.frame(p_value = result$p_values,
+                   rejected = result$rejected,
+                   hyp_idx = seq_len(m)) |> dplyr::arrange(p_value)
 }
 
 
@@ -75,17 +74,18 @@ compute_precomputation_pieces <- function(fit) {
   U <- P_decomp$vectors
   Lambda_minus_half <- 1 / sqrt(P_decomp$values)
   D <- (Lambda_minus_half * t(U)) %*% t(wZ)
+  # D_list <- apply(D, 1L, function(row) row, simplify = FALSE)
   out <- list(a = a, w = w, D = D)
   return(out)
 }
 
 
 run_standard_nb_regression <- function(Y_list, x, Z, alpha = 0.1) {
-  p_values <- sapply(X = Y_list, FUN = function(y) {
+  system.time(p_values <- sapply(X = Y_list, FUN = function(y) {
     fit <- MASS::glm.nb(y ~ x + Z)
     s <- summary(fit)
     coef(s)["x", "Pr(>|z|)"]
-  })
+  }))
   rejected <- stats::p.adjust(p_values, method = "BH") < 0.1
   data.frame(p_value = p_values,
              rejected = rejected,
