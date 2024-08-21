@@ -27,26 +27,39 @@ a vector of synthetic data generated from the GLM
 \code{generate_glm_data()} generates synthetic GLM data.
 }
 \examples{
-# simulate data
+##########################
+# GENERATE SINGLE DATASET
+#########################
 n <- 7000
 x <- rbinom(n = n, size = 1, prob = 0.25)
-z <- MASS::mvrnorm(n = n, mu = c(-0.5, 0.5), Sigma = toeplitz(c(1, 0.5)))
-colnames(z) <- c("1", "2")
+Z <- MASS::mvrnorm(n = n, mu = c(-0.5, 0.5), Sigma = toeplitz(c(1, 0.5)))
+colnames(Z) <- c("1", "2")
 family_object <- MASS::negative.binomial(5)
-design_matrix <- cbind(x, z)
+design_matrix <- cbind(x, Z)
 colnames(design_matrix) <- c("x", "z1", "z2")
+coefs <- log(c(7, 1.3, 0.8, 1.1))
 y <- generate_glm_data(
   design_matrix = design_matrix,
-  coefficients = log(c(7, 1.3, 0.8, 1.1)),
+  coefficients = coefs,
   family_object = family_object,
   add_intercept = TRUE
 )
 # MASS with unknown size
-fit_theta_est_mass <- MASS::glm.nb(formula = y ~ x + z)
+fit_theta_est_mass <- MASS::glm.nb(formula = y ~ x + Z)
 summary(fit_theta_est_mass)
 # VGAM with unknown size
-fit_theta_est_vgam <- VGAM::vglm(y ~ x + z, family = VGAM::negbinomial())
+fit_theta_est_vgam <- VGAM::vglm(y ~ x + Z, family = VGAM::negbinomial())
 VGAM::summary(fit_theta_est_vgam)
 # GLM with known size
-fit_theta_known <- glm(formula = y ~ x + z, family = family_object)
+fit_theta_known <- glm(formula = y ~ x + Z, family = family_object)
+
+############################
+# GENERATE MULTIPLE DATASETS
+############################
+Y_list <- replicate(n = 1000L,
+  expr = {generate_glm_data(design_matrix, coefs, family_object, TRUE)},
+  simplify = FALSE)
+fits <- lapply(Y_list, function(y) {
+  fit_theta_est_mass <- MASS::glm.nb(formula = y ~ x + Z)
+})
 }
