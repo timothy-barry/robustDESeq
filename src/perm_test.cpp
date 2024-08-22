@@ -15,11 +15,10 @@ List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int h, do
   std::vector<double> stop_times(m), original_statistics(m), p_values(m);
   std::vector<int> n_losses(m, 0), trt_idxs;
   double curr_test_stat, t = 0, h_doub = static_cast<double>(h), m_doub = static_cast<double>(m), threshold, n_in_active_set;
-  List curr_precomp;
 
   // select the test statistic
   // Use if-else to set the function based on user input
-  std::function<double(List, const std::vector<int>&, int)> funct;
+  double (*funct)(List, const std::vector<int>&, int) = nullptr;
   if (test_stat_str == "compute_score_stat") {
     funct = compute_score_stat;
   } else if (test_stat_str == "compute_mean_over_treated_units") {
@@ -35,7 +34,7 @@ List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int h, do
 
   // compute the original test statistics
   for (int i = 0; i < m; i++) {
-    original_statistics[i] = funct(curr_precomp, trt_idxs, n_trt);
+    original_statistics[i] = funct(precomp_list(i), trt_idxs, n_trt);
   }
 
   // define objects related to random permutations

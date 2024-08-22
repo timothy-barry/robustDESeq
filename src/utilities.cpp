@@ -46,6 +46,7 @@ double compute_score_stat(List precomp, const std::vector<int>& trt_idxs, int n_
   NumericVector a = precomp(0);
   NumericVector w = precomp(1);
   List D_list = precomp(2);
+
   double lower_right = 0, lower_left = 0, top = 0, inner_sum;
   int D_nrow = D_list.length();
   NumericVector x;
