@@ -4,15 +4,7 @@
 \alias{run_robust_nb_regression}
 \title{Run robust NB regression}
 \usage{
-run_robust_nb_regression(
-  Y_list,
-  x,
-  Z,
-  h = 15L,
-  alpha = 0.1,
-  theta = NULL,
-  method = "MASS"
-)
+run_robust_nb_regression(Y_list, x, Z, h = 15L, alpha = 0.1, method = "MASS")
 }
 \arguments{
 \item{Y_list}{a list of response vectors}
@@ -33,11 +25,12 @@ Run robust NB regression
 ############################
 n <- 1000L
 m <- 500L
+theta <- 40
 Z <- MASS::mvrnorm(n = n, mu = c(-0.5, 0.5), Sigma = toeplitz(c(1, 0.5)))
 # x <- rbinom(n = n, size = 1, prob = binomial()$linkinv(-1 + as.numeric(Z \%*\% c(0.8, 0.7))))
 x <- rbinom(n = n, size = 1, prob = 0.3)
 colnames(Z) <- c("1", "2")
-family_object <- MASS::negative.binomial(15)
+family_object <- MASS::negative.binomial(theta)
 design_matrix <- cbind(x, Z)
 colnames(design_matrix) <- c("x", "z1", "z2")
 null_coefs <- log(c(7, 1.0, 0.8, 1.1))

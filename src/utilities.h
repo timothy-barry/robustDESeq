@@ -6,3 +6,8 @@ using namespace Rcpp;
 #define DRAW_WOR_SAMPLE
 void draw_wor_sample(boost::random::mt19937& generator, boost::random::uniform_real_distribution<double>& distribution, const std::vector<double>& i_doub_array, std::vector<int>& random_samp, int n_trt, double n_doub);
 #endif
+
+#ifndef COMPUTE_SCORE_STAT
+#define COMPUTE_SCORE_STAT
+double compute_score_stat(List precomp, const std::vector<int>& trt_idxs, int n_trt);
+#endif

@@ -2,38 +2,13 @@
 #include <boost/random.hpp>
 #include <stdexcept>
 #include <algorithm>
+#include <string>
 #include "utilities.h"
 using namespace Rcpp;
 
-// [[Rcpp::export]]
-double compute_test_statistic(NumericVector a, NumericVector w, List D_list, const std::vector<int>& trt_idxs, int n_trt) {
-  double lower_right = 0, lower_left = 0, top = 0, inner_sum;
-  int D_nrow = D_list.length();
-  NumericVector x;
-
-  // iterate over the rows of D
-  for (int i = 0; i < D_nrow; i ++) {
-    inner_sum = 0;
-    x = D_list(i);
-    for (int j = 0; j < n_trt; j ++) {
-      inner_sum += x[trt_idxs[j]];
-    }
-    lower_right += inner_sum * inner_sum;
-  }
-
-  // second, compute the lower-left hand of the denominator; also, compute the top
-  for (int j = 0; j < n_trt; j ++) {
-    top += a[trt_idxs[j]];
-    lower_left += w[trt_idxs[j]];
-  }
-
-  // finally, compute the z-score
-  return(top/sqrt(lower_left - lower_right));
-}
-
 
 // [[Rcpp::export]]
-List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int h, double alpha) {
+List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int h, double alpha, std::string test_stat_str) {
   // define variables and objects
   int n = x.length(), m = precomp_list.length(), max_n_losses_active_set, n_trt;
   std::vector<bool> active_set(m, true), futility_set(m, false), rejected_set(m, false);
@@ -41,6 +16,16 @@ List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int h, do
   std::vector<int> n_losses(m, 0), trt_idxs;
   double curr_test_stat, t = 0, h_doub = static_cast<double>(h), m_doub = static_cast<double>(m), threshold, n_in_active_set;
   List curr_precomp;
+
+  // select the test statistic
+  // Use if-else to set the function based on user input
+  std::function<double(List, const std::vector<int>&, int)> funct;
+  if (test_stat_str == "compute_score_stat") {
+    funct = compute_score_stat;
+  } else {
+    throw std::invalid_argument("Test statistic not recognized.");
+  }
+
 
   // populate the trt_idxs vector
   for (int i = 0; i < x.length(); i++) if (x[i] == 1) trt_idxs.push_back(i);
@@ -50,7 +35,7 @@ List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int h, do
   // compute the original test statistics
   for (int i = 0; i < m; i++) {
     curr_precomp = precomp_list(i);
-    original_statistics[i] = compute_test_statistic(curr_precomp(0), curr_precomp(1), curr_precomp(2), trt_idxs, n_trt);
+    original_statistics[i] = compute_score_stat(curr_precomp, trt_idxs, n_trt);
   }
 
   // define objects related to random permutations
@@ -73,8 +58,7 @@ List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int h, do
       // if in the active set, compute the test statistic and update gamma
       if (active_set[i]) {
         // compute the test statistic
-        curr_precomp = precomp_list(i);
-        curr_test_stat = compute_test_statistic(curr_precomp(0), curr_precomp(1), curr_precomp(2), random_samp, n_trt);
+        curr_test_stat = compute_score_stat(precomp_list(i), random_samp, n_trt);
         // determine whether we have a loss; if so, increment n_losses
         n_losses[i] += (curr_test_stat >= original_statistics[i] ? 1.0 : 0.0);
       }
