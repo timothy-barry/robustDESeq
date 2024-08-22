@@ -3,8 +3,8 @@ run_regress_out_covariates_test <- function(Y_list, x, Z, h = 15L, alpha = 0.1, 
   # fit null GLMs and perform precomputation
     precomp_list <- lapply(X = Y_list, FUN = function(y) {
       fit <- MASS::glm.nb(y ~ Z)
-      list(stats::resid(fit, type = resid_type))
+      r <- stats::setNames(stats::resid(fit, type = resid_type), NULL)
+      list(r)
     })
-    result <- run_adaptive_permutation_test(precomp_list, x, h, alpha)
-
+    result <- run_adaptive_permutation_test(precomp_list, x, h, alpha, "compute_mean_over_treated_units")
 }

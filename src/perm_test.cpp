@@ -22,10 +22,11 @@ List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int h, do
   std::function<double(List, const std::vector<int>&, int)> funct;
   if (test_stat_str == "compute_score_stat") {
     funct = compute_score_stat;
+  } else if (test_stat_str == "compute_mean_over_treated_units") {
+    funct = compute_mean_over_treated_units;
   } else {
     throw std::invalid_argument("Test statistic not recognized.");
   }
-
 
   // populate the trt_idxs vector
   for (int i = 0; i < x.length(); i++) if (x[i] == 1) trt_idxs.push_back(i);
@@ -34,8 +35,7 @@ List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int h, do
 
   // compute the original test statistics
   for (int i = 0; i < m; i++) {
-    curr_precomp = precomp_list(i);
-    original_statistics[i] = compute_score_stat(curr_precomp, trt_idxs, n_trt);
+    original_statistics[i] = funct(curr_precomp, trt_idxs, n_trt);
   }
 
   // define objects related to random permutations
@@ -58,7 +58,7 @@ List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int h, do
       // if in the active set, compute the test statistic and update gamma
       if (active_set[i]) {
         // compute the test statistic
-        curr_test_stat = compute_score_stat(precomp_list(i), random_samp, n_trt);
+        curr_test_stat = funct(precomp_list(i), random_samp, n_trt);
         // determine whether we have a loss; if so, increment n_losses
         n_losses[i] += (curr_test_stat >= original_statistics[i] ? 1.0 : 0.0);
       }

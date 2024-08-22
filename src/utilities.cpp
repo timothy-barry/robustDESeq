@@ -70,3 +70,10 @@ double compute_score_stat(List precomp, const std::vector<int>& trt_idxs, int n_
   return(top/sqrt(lower_left - lower_right));
 }
 
+
+double compute_mean_over_treated_units(List precomp, const std::vector<int>& trt_idxs, int n_trt) {
+  NumericVector r = precomp(0);
+  double sum = 0, n_trt_doub = static_cast<double>(n_trt);
+  for (int j = 0; j < n_trt; j ++) sum += r[trt_idxs[j]];
+  return(sum/sqrt(n_trt_doub));
+}
