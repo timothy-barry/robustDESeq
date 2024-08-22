@@ -4,7 +4,15 @@
 \alias{run_robust_nb_regression}
 \title{Run robust NB regression}
 \usage{
-run_robust_nb_regression(Y_list, x, Z, h = 15L, alpha = 0.1, theta = NULL)
+run_robust_nb_regression(
+  Y_list,
+  x,
+  Z,
+  h = 15L,
+  alpha = 0.1,
+  theta = NULL,
+  method = "MASS"
+)
 }
 \arguments{
 \item{Y_list}{a list of response vectors}
@@ -25,15 +33,16 @@ Run robust NB regression
 ############################
 n <- 1000L
 m <- 500L
-x <- rbinom(n = n, size = 1, prob = 0.25)
 Z <- MASS::mvrnorm(n = n, mu = c(-0.5, 0.5), Sigma = toeplitz(c(1, 0.5)))
+# x <- rbinom(n = n, size = 1, prob = binomial()$linkinv(-1 + as.numeric(Z \%*\% c(0.8, 0.7))))
+x <- rbinom(n = n, size = 1, prob = 0.3)
 colnames(Z) <- c("1", "2")
-family_object <- MASS::negative.binomial(5)
+family_object <- MASS::negative.binomial(15)
 design_matrix <- cbind(x, Z)
 colnames(design_matrix) <- c("x", "z1", "z2")
 null_coefs <- log(c(7, 1.0, 0.8, 1.1))
-alt_coefs <- log(c(7, 1.3, 0.8, 1.1))
-under_null <- sample(size = m, c(TRUE, FALSE), replace = TRUE, prob = c(0.95, 0.05))
+alt_coefs <- log(c(7, 1.1, 0.8, 1.1))
+under_null <- sample(c(rep(TRUE, 0.9 * m), rep(FALSE, 0.1 * m)))
 Y_list <- sapply(X = seq_len(m), FUN = function(i) {
   generate_glm_data(design_matrix = design_matrix,
   coefficients = if (under_null[i]) null_coefs else alt_coefs,
@@ -46,11 +55,13 @@ h <- 15L; alpha <- 0.1; theta <- NULL
 # STANDARD NB REGRESSION
 ########################
 standard_res <- run_standard_nb_regression(Y_list = Y_list, x = x, Z = Z)
-mean(under_null[standard_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
+n_true_discoveries_standard <- sum(!under_null[standard_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
+fdp_standard <- mean(under_null[standard_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
 
 ######################
 # ROBUST NB REGRESSION
 ######################
 robust_res <- run_robust_nb_regression(Y_list = Y_list, x = x, Z = Z)
-mean(under_null[robust_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
+n_true_discoveries_robust <- sum(!under_null[robust_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
+fdp_robust <- mean(under_null[robust_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
 }
