@@ -28,28 +28,22 @@ run_standard_nb_regression <- function(Y_list, x, Z, side = "two_tailed", alpha 
 }
 
 
-#' Title
+#' Run regress out residuals test
 #'
-#' @param Y_list
-#' @param x
-#' @param Z
-#' @param h
-#' @param alpha
-#' @param resid_type
+#' @inheritParams run_robust_nb_regression
 #'
-#' @return
+#' @return a data frame containing the p-values and rejections
 #' @export
-#'
-#' @examples
-run_regress_out_covariates_test <- function(Y_list, x, Z, h = 15L, alpha = 0.1, resid_type = c("response", "deviance", "pearson")[1]) {
+run_regress_out_covariates_test <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, resid_type = c("response", "deviance", "pearson")[1]) {
   if (!(resid_type %in% c("response", "deviance", "pearson"))) stop("Residual type not recognized.")
+  side_code <- get_side_code(side)
   # fit null GLMs and perform precomputation
     precomp_list <- lapply(X = Y_list, FUN = function(y) {
       fit <- MASS::glm.nb(y ~ Z)
       r <- stats::setNames(stats::resid(fit, type = resid_type), NULL)
       list(r)
     })
-    result <- run_adaptive_permutation_test(precomp_list, x, h, alpha, "compute_mean_over_treated_units")
+    result <- run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, "compute_mean_over_treated_units")
     df <- data.frame(p_value = result$p_values,
                      rejected = result$rejected,
                      hyp_idx = seq_len(m)) |> dplyr::arrange(p_value)

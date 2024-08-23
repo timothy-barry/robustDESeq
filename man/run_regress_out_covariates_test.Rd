@@ -2,20 +2,28 @@
 % Please edit documentation in R/other_methods.R
 \name{run_regress_out_covariates_test}
 \alias{run_regress_out_covariates_test}
-\title{Title}
+\title{Run regress out residuals test}
 \usage{
 run_regress_out_covariates_test(
   Y_list,
   x,
   Z,
+  side = "two_tailed",
   h = 15L,
   alpha = 0.1,
   resid_type = c("response", "deviance", "pearson")[1]
 )
 }
 \arguments{
-\item{resid_type}{}
+\item{Y_list}{a list of response vectors}
+
+\item{x}{the treatment vector}
+
+\item{Z}{the covariate matrix}
+}
+\value{
+a data frame containing the p-values and rejections
 }
 \description{
-Title
+Run regress out residuals test
 }

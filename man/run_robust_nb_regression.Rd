@@ -55,21 +55,21 @@ h <- 15L; alpha <- 0.1; theta <- NULL
 ########################
 # STANDARD NB REGRESSION
 ########################
-standard_res <- run_standard_nb_regression(Y_list = Y_list, x = x, Z = Z, side = "right")
+standard_res <- run_standard_nb_regression(Y_list = Y_list, x = x, Z = Z, side = "two_tailed")
 n_true_discoveries_standard <- sum(!under_null[standard_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
 fdp_standard <- mean(under_null[standard_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
 
 ######################
 # ROBUST NB REGRESSION
 ######################
-robust_res <- run_robust_nb_regression(Y_list = Y_list, x = x, Z = Z)
+robust_res <- run_robust_nb_regression(Y_list = Y_list, x = x, Z = Z, side = "two_tailed")
 n_true_discoveries_robust <- sum(!under_null[robust_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
 fdp_robust <- mean(under_null[robust_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
 
 ###########################
 # REGRESSING OUT COVARIATES
 ###########################
-residual_res <- run_regress_out_covariates_test(Y_list = Y_list, x = x, Z = Z)
+residual_res <- run_regress_out_covariates_test(Y_list = Y_list, x = x, Z = Z, side = "two_tailed")
 n_true_discoveries_residual <- sum(!under_null[residual_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
 fdp_residual <- mean(under_null[residual_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
 }
