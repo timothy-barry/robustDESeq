@@ -48,36 +48,3 @@ run_regress_out_covariates_test <- function(Y_list, x, Z, side = "two_tailed", h
                      rejected = result$rejected,
                      hyp_idx = seq_len(m)) |> dplyr::arrange(p_value)
 }
-
-
-#' Run Mann-Whitney test
-#'
-#' @param x binary vector of treatment indicators
-#' @param y observations for the second sample
-#'
-#' @return the z-score
-#' @export
-#'
-#' @examples
-#' # x <- rbinom(n = 500, size = 1, prob = 0.5)
-#' # y <- MASS::rnegbin(n = n, mu = 50, theta = 10)
-#' n <- 1000
-#' # s <- rnorm(n = n, mean = 50)
-#' s <- MASS::rnegbin(n = n, mu = 40, theta = 10)
-#' x <- s[1:500]
-#' y <- s[501:1000]
-#' run_mann_whitney_test_simple(x, y)
-#' wilcox.test(x, y)
-run_mann_whitney_test_simple <- function(s1, s2) {
-  combined <- c(x, y)
-  r <- rank(combined)
-  n.x <- length(x)
-  n.y <- length(y)
-  STATISTIC <- sum(r[seq_along(x)]) - n.x * (n.x + 1)/2
-  TIES <- (length(r) != length(unique(r)))
-  NTIES <- table(r)
-  z <- STATISTIC - n.x * n.y/2
-  SIGMA <- sqrt((n.x * n.y/12) * ((n.x + n.y + 1) - sum(NTIES^3 - NTIES)/((n.x + n.y) * (n.x + n.y - 1))))
-  CORRECTION <- switch(alternative, two.sided = sign(z) * 0.5, greater = 0.5, less = -0.5)
-  z <- (z - CORRECTION)/SIGMA
-}

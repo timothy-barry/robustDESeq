@@ -16,3 +16,8 @@ double compute_score_stat(List precomp, const std::vector<int>& trt_idxs, int n_
 #define COMPUTE_MEAN_OVER_TREATED_UNITS
 double compute_mean_over_treated_units(List precomp, const std::vector<int>& trt_idxs, int n_trt);
 #endif
+
+#ifndef COMPUTE_MW_TEST_STATISTIC
+#define COMPUTE_MW_TEST_STATISTIC
+double compute_mw_test_statistic(List precomp, const std::vector<int>& trt_idxs, int n_trt);
+#endif

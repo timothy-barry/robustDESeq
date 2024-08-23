@@ -20,6 +20,12 @@ run_regress_out_covariates_test(
 \item{x}{the treatment vector}
 
 \item{Z}{the covariate matrix}
+
+\item{side}{the side of the test, one of "left", "right", or "two_tailed"}
+
+\item{h}{tuning parameter for the anytime-valid permutation test}
+
+\item{alpha}{nominal FDR of the BH procedure}
 }
 \value{
 a data frame containing the p-values and rejections

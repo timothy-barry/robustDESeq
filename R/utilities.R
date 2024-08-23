@@ -17,3 +17,10 @@ get_side_code <- function(side) {
   if (!(side %in% c("left", "right", "two_tailed"))) stop("`side` not recognized.")
   switch(side, left = -1L, right = 1L, two_tailed = 0L)
 }
+
+
+get_result_metrics <- function(result, under_null) {
+  n_true_discoveries <- sum(!under_null[result |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
+  fdp <- mean(under_null[result |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
+  return(list(n_true_discoveries = n_true_discoveries, fdp = fdp))
+}

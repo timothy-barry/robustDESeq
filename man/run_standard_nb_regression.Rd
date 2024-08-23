@@ -19,6 +19,12 @@ run_standard_nb_regression(
 \item{x}{the treatment vector}
 
 \item{Z}{the covariate matrix}
+
+\item{side}{the side of the test, one of "left", "right", or "two_tailed"}
+
+\item{alpha}{nominal FDR of the BH procedure}
+
+\item{method}{the method to use to carry out the NB regression under the null model, either "MASS" or "VGAM"}
 }
 \value{
 a data frame containing the p-values and rejections

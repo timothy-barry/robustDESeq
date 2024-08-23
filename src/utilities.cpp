@@ -78,3 +78,24 @@ double compute_mean_over_treated_units(List precomp, const std::vector<int>& trt
   for (int j = 0; j < n_trt; j ++) sum += r[trt_idxs[j]];
   return(sum/sqrt(n_trt_doub));
 }
+
+
+double compute_mw_test_statistic(List precomp, const std::vector<int>& trt_idxs, int n_trt) {
+  NumericVector r = precomp(0);
+  double sigma = precomp(1);
+  int side_code = precomp(2);
+  double n_trt_doub = static_cast<double>(n_trt);
+  double n_cntrl_doub = static_cast<double>(r.size()) - n_trt_doub;
+  double sum = 0;
+  for (int i = 0; i < n_trt; i ++) sum += r[trt_idxs[i]];
+  double statistic = sum - n_trt_doub * (n_trt_doub + 1.0)/2.0;
+  double statistic_mean_0 = statistic - n_trt_doub * n_cntrl_doub/2.0;
+  double correction;
+  if (side_code == 0) {
+    correction = (statistic_mean_0 == 0 ? 0 : (statistic_mean_0 > 0 ? 0.5 : -0.5));
+  } else {
+    correction = 0.5;
+  }
+  double z = (statistic_mean_0 - correction)/sigma;
+  return z;
+}

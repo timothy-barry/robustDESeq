@@ -20,6 +20,14 @@ run_robust_nb_regression(
 \item{x}{the treatment vector}
 
 \item{Z}{the covariate matrix}
+
+\item{side}{the side of the test, one of "left", "right", or "two_tailed"}
+
+\item{h}{tuning parameter for the anytime-valid permutation test}
+
+\item{alpha}{nominal FDR of the BH procedure}
+
+\item{method}{the method to use to carry out the NB regression under the null model, either "MASS" or "VGAM"}
 }
 \value{
 a data frame containing the rejection set
@@ -56,20 +64,17 @@ h <- 15L; alpha <- 0.1; theta <- NULL
 # STANDARD NB REGRESSION
 ########################
 standard_res <- run_standard_nb_regression(Y_list = Y_list, x = x, Z = Z, side = "right")
-n_true_discoveries_standard <- sum(!under_null[standard_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
-fdp_standard <- mean(under_null[standard_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
+get_result_metrics(standard_res, under_null)
 
 ######################
 # ROBUST NB REGRESSION
 ######################
 robust_res <- run_robust_nb_regression(Y_list = Y_list, x = x, Z = Z, side = "right")
-n_true_discoveries_robust <- sum(!under_null[robust_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
-fdp_robust <- mean(under_null[robust_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
+get_result_metrics(robust_res, under_null)
 
 ###########################
 # REGRESSING OUT COVARIATES
 ###########################
-residual_res <- run_regress_out_covariates_test(Y_list = Y_list, x = x, Z = Z, side = "two_tailed")
-n_true_discoveries_residual <- sum(!under_null[residual_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
-fdp_residual <- mean(under_null[residual_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
+residual_res <- run_regress_out_covariates_test(Y_list = Y_list, x = x, Z = Z, side = "right")
+get_result_metrics(residual_res, under_null)
 }

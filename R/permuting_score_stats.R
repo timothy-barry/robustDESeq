@@ -3,6 +3,10 @@
 #' @param Y_list a list of response vectors
 #' @param x the treatment vector
 #' @param Z the covariate matrix
+#' @param side the side of the test, one of "left", "right", or "two_tailed"
+#' @param h tuning parameter for the anytime-valid permutation test
+#' @param alpha nominal FDR of the BH procedure
+#' @param method the method to use to carry out the NB regression under the null model, either "MASS" or "VGAM"
 #'
 #' @return a data frame containing the rejection set
 #' @export
@@ -36,22 +40,19 @@
 #' # STANDARD NB REGRESSION
 #' ########################
 #' standard_res <- run_standard_nb_regression(Y_list = Y_list, x = x, Z = Z, side = "right")
-#' n_true_discoveries_standard <- sum(!under_null[standard_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
-#' fdp_standard <- mean(under_null[standard_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
+#' get_result_metrics(standard_res, under_null)
 #'
 #' ######################
 #' # ROBUST NB REGRESSION
 #' ######################
 #' robust_res <- run_robust_nb_regression(Y_list = Y_list, x = x, Z = Z, side = "right")
-#' n_true_discoveries_robust <- sum(!under_null[robust_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
-#' fdp_robust <- mean(under_null[robust_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
+#' get_result_metrics(robust_res, under_null)
 #'
 #' ###########################
 #' # REGRESSING OUT COVARIATES
 #' ###########################
 #' residual_res <- run_regress_out_covariates_test(Y_list = Y_list, x = x, Z = Z, side = "right")
-#' n_true_discoveries_residual <- sum(!under_null[residual_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
-#' fdp_residual <- mean(under_null[residual_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
+#' get_result_metrics(residual_res, under_null)
 run_robust_nb_regression <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, method = "MASS") {
   Z_model <- cbind(1, Z)
   colnames(Z_model) <- rownames(Z_model) <- NULL
@@ -78,9 +79,7 @@ run_robust_nb_regression <- function(Y_list, x, Z, side = "two_tailed", h = 15L,
 
   # run the permutation test
   result <- run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, "compute_score_stat")
-  df <- data.frame(p_value = result$p_values,
-                   rejected = result$rejected,
-                   hyp_idx = seq_len(m)) |> dplyr::arrange(p_value)
+  get_result_df(p_values = result$p_values, rejected = result$rejected)
 }
 
 

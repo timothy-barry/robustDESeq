@@ -22,6 +22,8 @@ List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int side_
     funct = compute_score_stat;
   } else if (test_stat_str == "compute_mean_over_treated_units") {
     funct = compute_mean_over_treated_units;
+  } else if (test_stat_str == "compute_mw_test_statistic") {
+    funct = compute_mw_test_statistic;
   } else {
     throw std::invalid_argument("Test statistic not recognized.");
   }
@@ -105,5 +107,7 @@ List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int side_
     p_values[i] = (side_code == 0 ? 2.0 : 1.0) * h_doub/(stop_times[i] - static_cast<double>(n_losses[i]) + h_doub);
   }
 
-  return List::create(Named("p_values") = p_values, Named("rejected") = rejected_set);
+  return List::create(Named("p_values") = p_values,
+                      Named("rejected") = rejected_set,
+                      Named("original_statistics") = original_statistics);
 }
