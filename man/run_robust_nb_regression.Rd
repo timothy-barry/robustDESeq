@@ -55,14 +55,14 @@ h <- 15L; alpha <- 0.1; theta <- NULL
 ########################
 # STANDARD NB REGRESSION
 ########################
-standard_res <- run_standard_nb_regression(Y_list = Y_list, x = x, Z = Z, side = "two_tailed")
+standard_res <- run_standard_nb_regression(Y_list = Y_list, x = x, Z = Z, side = "right")
 n_true_discoveries_standard <- sum(!under_null[standard_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
 fdp_standard <- mean(under_null[standard_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
 
 ######################
 # ROBUST NB REGRESSION
 ######################
-robust_res <- run_robust_nb_regression(Y_list = Y_list, x = x, Z = Z, side = "two_tailed")
+robust_res <- run_robust_nb_regression(Y_list = Y_list, x = x, Z = Z, side = "right")
 n_true_discoveries_robust <- sum(!under_null[robust_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
 fdp_robust <- mean(under_null[robust_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
 

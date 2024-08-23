@@ -10,11 +10,11 @@ using namespace Rcpp;
 // [[Rcpp::export]]
 List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int side_code, int h, double alpha, std::string test_stat_str) {
   // define variables and objects
-  int n = x.length(), m = precomp_list.length(), max_n_losses_active_set, n_trt;
+  int n = x.length(), m = precomp_list.length(), n_trt;
   std::vector<bool> active_set(m, true), futility_set(m, false), rejected_set(m, false);
-  std::vector<double> stop_times(m), original_statistics(m), p_values(m);
-  std::vector<int> n_right_losses(m, 0), n_left_losses(m, 0), n_losses(m, 0), trt_idxs;
-  double curr_test_stat, t = 0, h_doub = static_cast<double>(h), m_doub = static_cast<double>(m), threshold, n_in_active_set;
+  std::vector<double> stop_times(m), original_statistics(m), p_values(m), n_right_losses(m, 0), n_losses(m, 0);
+  std::vector<int> trt_idxs;
+  double curr_test_stat, t = 0, h_doub = static_cast<double>(h), m_doub = static_cast<double>(m), threshold, n_in_active_set, max_n_losses_active_set;
 
   // select the test statistic
   double (*funct)(List, const std::vector<int>&, int) = nullptr;
@@ -59,15 +59,16 @@ List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int side_
         curr_test_stat = funct(precomp_list(i), random_samp, n_trt);
         // determine whether we have a loss; if so, increment n_right_losses
         n_right_losses[i] += (curr_test_stat >= original_statistics[i] ? 1.0 : 0.0);
-        n_left_losses[i] += (curr_test_stat <= original_statistics[i] ? 1.0 : 0.0);
-        if (side_code == -1) {
-          n_losses[i] = n_left_losses[i];
-        } else if (side_code == 0) {
-          n_losses[i] = std::min(n_right_losses[i], n_left_losses[i]);
-        } else {
-          n_losses[i] = n_right_losses[i];
-        }
       }
+    }
+
+    // update n_losses
+    if (side_code == -1) {
+      for (int i = 0; i < m; i ++) n_losses[i] = t - n_right_losses[i];
+    } else if (side_code == 0) {
+      for (int i = 0; i < m; i ++) n_losses[i] = std::min(n_right_losses[i], t - n_right_losses[i]);
+    } else {
+      n_losses = n_right_losses;
     }
 
     // move elements from active set into futility set
@@ -75,7 +76,7 @@ List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int side_
     n_in_active_set = 0;
     for (int i = 0; i < m; i++) {
       if (active_set[i]) {
-        if (n_losses[i] == h) { // hit loss limit
+        if (n_losses[i] >= h_doub) { // hit loss limit
           active_set[i] = false;
           futility_set[i] = true;
           stop_times[i] = t;
@@ -88,7 +89,7 @@ List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int side_
 
     // check for rejection of active set hypotheses
     threshold = t + h_doub - ((side_code == 0 ? 2.0 : 1.0) * h_doub * m_doub)/(n_in_active_set * alpha);
-    if (static_cast<double>(max_n_losses_active_set) <= threshold) {
+    if (max_n_losses_active_set <= threshold) {
       for (int i = 0; i < m; i ++) {
         if (active_set[i]) {
           active_set[i] = false;
