@@ -4,7 +4,15 @@
 \alias{run_robust_nb_regression}
 \title{Run robust NB regression}
 \usage{
-run_robust_nb_regression(Y_list, x, Z, h = 15L, alpha = 0.1, method = "MASS")
+run_robust_nb_regression(
+  Y_list,
+  x,
+  Z,
+  side = "two_tailed",
+  h = 15L,
+  alpha = 0.1,
+  method = "MASS"
+)
 }
 \arguments{
 \item{Y_list}{a list of response vectors}
@@ -27,8 +35,8 @@ n <- 1000L
 m <- 500L
 theta <- 10
 Z <- MASS::mvrnorm(n = n, mu = c(-0.5, 0.5), Sigma = toeplitz(c(1, 0.5)))
-# x <- rbinom(n = n, size = 1, prob = binomial()$linkinv(-1 + as.numeric(Z \%*\% c(0.8, 0.7))))
-x <- rbinom(n = n, size = 1, prob = 0.3)
+x <- rbinom(n = n, size = 1, prob = binomial()$linkinv(-1 + as.numeric(Z \%*\% c(0.8, 0.7))))
+# x <- rbinom(n = n, size = 1, prob = 0.3)
 colnames(Z) <- c("1", "2")
 family_object <- MASS::negative.binomial(theta)
 design_matrix <- cbind(x, Z)
@@ -47,7 +55,7 @@ h <- 15L; alpha <- 0.1; theta <- NULL
 ########################
 # STANDARD NB REGRESSION
 ########################
-standard_res <- run_standard_nb_regression(Y_list = Y_list, x = x, Z = Z)
+standard_res <- run_standard_nb_regression(Y_list = Y_list, x = x, Z = Z, side = "right")
 n_true_discoveries_standard <- sum(!under_null[standard_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
 fdp_standard <- mean(under_null[standard_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
 
@@ -57,4 +65,11 @@ fdp_standard <- mean(under_null[standard_res |> dplyr::filter(rejected) |> dplyr
 robust_res <- run_robust_nb_regression(Y_list = Y_list, x = x, Z = Z)
 n_true_discoveries_robust <- sum(!under_null[robust_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
 fdp_robust <- mean(under_null[robust_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
+
+###########################
+# REGRESSING OUT COVARIATES
+###########################
+residual_res <- run_regress_out_covariates_test(Y_list = Y_list, x = x, Z = Z)
+n_true_discoveries_residual <- sum(!under_null[residual_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
+fdp_residual <- mean(under_null[residual_res |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
 }

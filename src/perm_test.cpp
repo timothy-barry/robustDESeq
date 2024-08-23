@@ -8,16 +8,15 @@ using namespace Rcpp;
 
 
 // [[Rcpp::export]]
-List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int h, double alpha, std::string test_stat_str) {
+List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int side_code, int h, double alpha, std::string test_stat_str) {
   // define variables and objects
   int n = x.length(), m = precomp_list.length(), max_n_losses_active_set, n_trt;
   std::vector<bool> active_set(m, true), futility_set(m, false), rejected_set(m, false);
   std::vector<double> stop_times(m), original_statistics(m), p_values(m);
-  std::vector<int> n_losses(m, 0), trt_idxs;
+  std::vector<int> n_right_losses(m, 0), trt_idxs;
   double curr_test_stat, t = 0, h_doub = static_cast<double>(h), m_doub = static_cast<double>(m), threshold, n_in_active_set;
 
   // select the test statistic
-  // Use if-else to set the function based on user input
   double (*funct)(List, const std::vector<int>&, int) = nullptr;
   if (test_stat_str == "compute_score_stat") {
     funct = compute_score_stat;
@@ -58,8 +57,8 @@ List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int h, do
       if (active_set[i]) {
         // compute the test statistic
         curr_test_stat = funct(precomp_list(i), random_samp, n_trt);
-        // determine whether we have a loss; if so, increment n_losses
-        n_losses[i] += (curr_test_stat >= original_statistics[i] ? 1.0 : 0.0);
+        // determine whether we have a loss; if so, increment n_right_losses
+        n_right_losses[i] += (curr_test_stat >= original_statistics[i] ? 1.0 : 0.0);
       }
     }
 
@@ -68,13 +67,13 @@ List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int h, do
     n_in_active_set = 0;
     for (int i = 0; i < m; i++) {
       if (active_set[i]) {
-        if (n_losses[i] == h) { // hit loss limit
+        if (n_right_losses[i] == h) { // hit loss limit
           active_set[i] = false;
           futility_set[i] = true;
           stop_times[i] = t;
         } else {
           n_in_active_set ++;
-          if (n_losses[i] > max_n_losses_active_set) max_n_losses_active_set = n_losses[i];
+          if (n_right_losses[i] > max_n_losses_active_set) max_n_losses_active_set = n_right_losses[i];
         }
       }
     }
@@ -94,9 +93,8 @@ List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int h, do
   }
   // compute the p-values
   for (int i = 0; i < m; i ++) {
-    p_values[i] = h_doub/(stop_times[i] - static_cast<double>(n_losses[i]) + h_doub);
+    p_values[i] = h_doub/(stop_times[i] - static_cast<double>(n_right_losses[i]) + h_doub);
   }
 
-  return List::create(Named("p_values") = p_values,
-                      Named("rejected") = rejected_set);
+  return List::create(Named("p_values") = p_values, Named("rejected") = rejected_set);
 }
