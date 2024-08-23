@@ -5,6 +5,10 @@ run_adaptive_permutation_test <- function(precomp_list, x, side_code, h, alpha, 
     .Call(`_robustDESeq_run_adaptive_permutation_test`, precomp_list, x, side_code, h, alpha, test_stat_str)
 }
 
+run_permutation_test <- function(precomp_list, x, side_code, B, test_stat_str) {
+    .Call(`_robustDESeq_run_permutation_test`, precomp_list, x, side_code, B, test_stat_str)
+}
+
 generate_wor_sample_test <- function(n, n_trt, n_samples) {
     .Call(`_robustDESeq_generate_wor_sample_test`, n, n_trt, n_samples)
 }

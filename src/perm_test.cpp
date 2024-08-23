@@ -8,13 +8,12 @@ using namespace Rcpp;
 
 
 // [[Rcpp::export]]
-List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int side_code, int h, double alpha, std::string test_stat_str) {
+std::vector<double> run_permutation_test(List precomp_list, IntegerVector x, int side_code, int B, std::string test_stat_str) {
   // define variables and objects
   int n = x.length(), m = precomp_list.length(), n_trt;
-  std::vector<bool> active_set(m, true), futility_set(m, false), rejected_set(m, false);
-  std::vector<double> stop_times(m), original_statistics(m), p_values(m), n_right_losses(m, 0), n_losses(m, 0);
+  std::vector<double> original_statistics(m), p_values(m), n_right_losses(m, 0);
   std::vector<int> trt_idxs;
-  double curr_test_stat, t = 0, h_doub = static_cast<double>(h), m_doub = static_cast<double>(m), threshold, n_in_active_set, max_n_losses_active_set;
+  double curr_test_stat, B_doub = static_cast<double>(B);
 
   // select the test statistic
   double (*funct)(List, const std::vector<int>&, int) = nullptr;
@@ -47,67 +46,27 @@ List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int side_
   std::vector<int> random_samp(n);
   for (int i = 0; i < n; i++) random_samp[i] = i;
 
-  // iterate through time
-  for (int k = 0; k < 50000; k++) {
-    // increment time
-    t++;
+  // iterate through time, computing null test statistics and updating n_right_losses
+  for (int k = 0; k < B; k++) {
     // generate a random permutation
     draw_wor_sample(generator, distribution, i_doub_array, random_samp, n_trt, n_doub);
     // iterate over hypotheses
     for (int i = 0; i < m; i ++) {
-      // if in the active set, compute the test statistic and update gamma
-      if (active_set[i]) {
-        // compute the test statistic
-        curr_test_stat = funct(precomp_list(i), random_samp, n_trt);
-        // determine whether we have a loss; if so, increment n_right_losses
-        n_right_losses[i] += (curr_test_stat >= original_statistics[i] ? 1.0 : 0.0);
-      }
-    }
-
-    // update n_losses
-    if (side_code == -1) {
-      for (int i = 0; i < m; i ++) n_losses[i] = t - n_right_losses[i];
-    } else if (side_code == 0) {
-      for (int i = 0; i < m; i ++) n_losses[i] = std::min(n_right_losses[i], t - n_right_losses[i]);
-    } else {
-      n_losses = n_right_losses;
-    }
-
-    // move elements from active set into futility set
-    max_n_losses_active_set = 0;
-    n_in_active_set = 0;
-    for (int i = 0; i < m; i++) {
-      if (active_set[i]) {
-        if (n_losses[i] >= h_doub) { // hit loss limit
-          active_set[i] = false;
-          futility_set[i] = true;
-          stop_times[i] = t;
-        } else {
-          n_in_active_set ++;
-          if (n_losses[i] > max_n_losses_active_set) max_n_losses_active_set = n_losses[i];
-        }
-      }
-    }
-
-    // check for rejection of active set hypotheses
-    threshold = t + h_doub - ((side_code == 0 ? 2.0 : 1.0) * h_doub * m_doub)/(n_in_active_set * alpha);
-    if (max_n_losses_active_set <= threshold) {
-      for (int i = 0; i < m; i ++) {
-        if (active_set[i]) {
-          active_set[i] = false;
-          rejected_set[i] = true;
-          stop_times[i] = t;
-        }
-      }
-      break;
+      // compute the test statistic
+      curr_test_stat = funct(precomp_list(i), random_samp, n_trt);
+      // determine whether we have a loss; if so, increment n_right_losses
+      n_right_losses[i] += (curr_test_stat >= original_statistics[i] ? 1.0 : 0.0);
     }
   }
-  // compute the p-values
-  for (int i = 0; i < m; i ++) {
-    p_values[i] = (side_code == 0 ? 2.0 : 1.0) * h_doub/(stop_times[i] - static_cast<double>(n_losses[i]) + h_doub);
+
+  // compute p-values
+  if (side_code == 1) {
+    for (int i = 0; i < m; i ++) p_values[i] = (1.0 + n_right_losses[i])/(1.0 + B_doub);
+  } else if (side_code == -1) {
+    for (int i = 0; i < m; i ++) p_values[i] = (1.0 + B_doub - n_right_losses[i])/(1.0 + B_doub);
+  } else {
+    for (int i = 0; i < m; i ++) p_values[i] = 2.0 * std::min((1.0 + n_right_losses[i])/(1.0 + B_doub), (1.0 + B_doub - n_right_losses[i])/(1.0 + B_doub));
   }
 
-  return List::create(Named("p_values") = p_values,
-                      Named("rejected") = rejected_set,
-                      Named("original_statistics") = original_statistics);
+  return p_values;
 }

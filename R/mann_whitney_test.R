@@ -46,7 +46,7 @@ run_mann_whitney_test_asymptotic <- function(Y_list, x, Z, side = "two_tailed", 
 #'
 #' @return  a data frame containing the results
 #' @export
-run_mann_whitney_test_permutations <-  function(Y_list, x, Z, side = "two_tailed", alpha = 0.1) {
+run_mann_whitney_test_permutations <-  function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, adaptive_permutation_test = TRUE) {
   side_code <- get_side_code(side)
   # iterate over hypotheses, performing precomputation
   precomp_list <- lapply(X = Y_list, FUN = function(y) {
@@ -58,6 +58,13 @@ run_mann_whitney_test_permutations <-  function(Y_list, x, Z, side = "two_tailed
     list(r = r, sigma = sigma, side_code = side_code)
   })
   # run the permutation test
-  result <- run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, "compute_mw_test_statistic")
-  get_result_df(p_values = result$p_values, rejected = result$rejected)
+  if (adaptive_permutation_test) {
+    result <- run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, "compute_mw_test_statistic")
+    p_values <- result$p_values; rejected <- result$rejected
+  } else {
+    m <- length(Y_list)
+    p_values <- run_permutation_test(precomp_list, x, side_code, round(10 * m/alpha), "compute_mw_test_statistic")
+    rejected <- stats::p.adjust(p_values, method = "BH") < alpha
+  }
+  get_result_df(p_values = p_values, rejected = rejected)
 }
