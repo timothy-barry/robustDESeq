@@ -11,7 +11,8 @@ run_robust_nb_regression(
   side = "two_tailed",
   h = 15L,
   alpha = 0.1,
-  method = "MASS"
+  method = "MASS",
+  adaptive_permutation_test = TRUE
 )
 }
 \arguments{
@@ -41,7 +42,7 @@ Run robust NB regression
 ############################
 n <- 1000L
 m <- 500L
-theta <- 10
+theta <- 30
 Z <- MASS::mvrnorm(n = n, mu = c(-0.5, 0.5), Sigma = toeplitz(c(1, 0.5)))
 # x <- rbinom(n = n, size = 1, prob = binomial()$linkinv(-1 + as.numeric(Z \%*\% c(0.8, 0.7))))
 x <- rbinom(n = n, size = 1, prob = 0.3)

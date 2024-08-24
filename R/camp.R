@@ -17,7 +17,7 @@
 #' ############################
 #' n <- 1000L
 #' m <- 500L
-#' theta <- 10
+#' theta <- 30
 #' Z <- MASS::mvrnorm(n = n, mu = c(-0.5, 0.5), Sigma = toeplitz(c(1, 0.5)))
 #' # x <- rbinom(n = n, size = 1, prob = binomial()$linkinv(-1 + as.numeric(Z %*% c(0.8, 0.7))))
 #' x <- rbinom(n = n, size = 1, prob = 0.3)
@@ -53,7 +53,7 @@
 #' ###########################
 #' residual_res <- run_regress_out_covariates_test(Y_list = Y_list, x = x, Z = Z, side = "right")
 #' get_result_metrics(residual_res, under_null)
-run_robust_nb_regression <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, method = "MASS") {
+run_robust_nb_regression <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, method = "MASS", adaptive_permutation_test = TRUE) {
   Z_model <- cbind(1, Z)
   colnames(Z_model) <- rownames(Z_model) <- NULL
   side_code <- get_side_code(side)
@@ -78,7 +78,12 @@ run_robust_nb_regression <- function(Y_list, x, Z, side = "two_tailed", h = 15L,
   }
 
   # run the permutation test
-  result <- run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, "compute_score_stat")
+  if (adaptive_permutation_test) {
+    result <- run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, "compute_score_stat")
+  } else {
+    p_values <- run_permutation_test(precomp_list, x, side_code, round(10 * m/alpha), "compute_score_stat")
+    rejected <- stats::p.adjust(p_values, method = "BH") < alpha
+  }
   get_result_df(p_values = result$p_values, rejected = result$rejected)
 }
 
