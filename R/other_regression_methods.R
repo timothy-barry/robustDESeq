@@ -4,11 +4,16 @@
 #'
 #' @return a data frame containing the p-values and rejections
 #' @export
-run_standard_nb_regression <- function(Y_list, x, Z, side = "two_tailed", alpha = 0.1, method = "MASS") {
+run_standard_nb_regression <- function(Y_list, x, Z, side = "two_tailed", alpha = 0.1, method = "MASS", theta = NULL) {
   if (!(side %in% c("left", "right", "two_tailed"))) stop("`side` not recognized.")
   if (method == "MASS") {
     p_values <- sapply(X = Y_list, FUN = function(y) {
-      fit <- MASS::glm.nb(y ~ x + Z)
+      if (is.null(theta)) {
+        fit <- MASS::glm.nb(y ~ x + Z)
+      } else {
+        fit <- stats::glm(y ~ x + Z, family = MASS::negative.binomial(theta))
+      }
+      fit$family <- stats::poisson()
       s <- summary(fit)
       z <- coef(s)["x", "z value"]
       compute_gaussian_p_value(z, side)

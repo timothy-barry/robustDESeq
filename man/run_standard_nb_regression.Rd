@@ -10,7 +10,8 @@ run_standard_nb_regression(
   Z,
   side = "two_tailed",
   alpha = 0.1,
-  method = "MASS"
+  method = "MASS",
+  theta = NULL
 )
 }
 \arguments{

@@ -28,3 +28,10 @@ get_result_metrics <- function(result, under_null) {
   fdp <- mean(under_null[result |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
   return(list(n_true_discoveries = n_true_discoveries, fdp = fdp))
 }
+
+get_theta_from_fitted_glm <- function(fit) {
+  w <- fit$weights
+  mu <- fit$fitted.values
+  theta <- mean((w * mu)/(mu - w))
+  return(theta)
+}

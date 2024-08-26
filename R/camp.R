@@ -17,12 +17,12 @@
 #' ############################
 #' n <- 1000L
 #' m <- 500L
-#' theta <- 30
+#' theta_gt <- 5
 #' Z <- MASS::mvrnorm(n = n, mu = c(-0.5, 0.5), Sigma = toeplitz(c(1, 0.5)))
 #' # x <- rbinom(n = n, size = 1, prob = binomial()$linkinv(-1 + as.numeric(Z %*% c(0.8, 0.7))))
 #' x <- rbinom(n = n, size = 1, prob = 0.3)
 #' colnames(Z) <- c("1", "2")
-#' family_object <- MASS::negative.binomial(theta)
+#' family_object <- MASS::negative.binomial(theta_gt)
 #' design_matrix <- cbind(x, Z)
 #' colnames(design_matrix) <- c("x", "z1", "z2")
 #' null_coefs <- log(c(7, 1.0, 0.8, 1.1))
@@ -34,7 +34,7 @@
 #'   family_object = family_object,
 #'   add_intercept = TRUE)
 #' }, simplify = FALSE)
-#' h <- 15L; alpha <- 0.1; theta <- NULL
+#' h <- 15L; alpha <- 0.1; theta <- 30
 #'
 #' ########################
 #' # STANDARD NB REGRESSION
@@ -53,7 +53,7 @@
 #' ###########################
 #' residual_res <- run_regress_out_covariates_test(Y_list = Y_list, x = x, Z = Z, side = "right")
 #' get_result_metrics(residual_res, under_null)
-run_robust_nb_regression <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, method = "MASS", adaptive_permutation_test = TRUE) {
+run_robust_nb_regression <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, method = "MASS", theta = NULL, adaptive_permutation_test = TRUE) {
   Z_model <- cbind(1, Z)
   colnames(Z_model) <- rownames(Z_model) <- NULL
   side_code <- get_side_code(side)
@@ -61,9 +61,13 @@ run_robust_nb_regression <- function(Y_list, x, Z, side = "two_tailed", h = 15L,
   # fit null GLMs and perform precomputation
   if (method == "MASS") {
     precomp_list <- lapply(X = Y_list, FUN = function(y) {
-      fit <- MASS::glm.nb(y ~ Z)
+      if (is.null(theta)) {
+        fit <- MASS::glm.nb(y ~ Z)
+        theta <- fit$theta
+      } else {
+        fit <- stats::glm(y ~ Z, family = MASS::negative.binomial(theta))
+      }
       coefs <- fit$coefficients
-      theta <- fit$theta
       compute_precomputation_pieces(y, Z_model, coefs, theta)
     })
   } else if (method == "VGAM") {
@@ -80,11 +84,12 @@ run_robust_nb_regression <- function(Y_list, x, Z, side = "two_tailed", h = 15L,
   # run the permutation test
   if (adaptive_permutation_test) {
     result <- run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, "compute_score_stat")
+    p_values <- result$p_values; rejected <- result$rejected
   } else {
     p_values <- run_permutation_test(precomp_list, x, side_code, round(10 * m/alpha), "compute_score_stat")
     rejected <- stats::p.adjust(p_values, method = "BH") < alpha
   }
-  get_result_df(p_values = result$p_values, rejected = result$rejected)
+  get_result_df(p_values = p_values, rejected = rejected)
 }
 
 
