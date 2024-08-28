@@ -25,8 +25,10 @@ get_side_code <- function(side) {
 
 get_result_metrics <- function(result, under_null) {
   n_true_discoveries <- sum(!under_null[result |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
-  fdp <- mean(under_null[result |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)])
-  return(list(n_true_discoveries = n_true_discoveries, fdp = fdp))
+  discoveries <- result |> dplyr::filter(rejected) |> dplyr::pull(hyp_idx)
+  n_discoveries <- length(discoveries)
+  fdp <- if (n_discoveries >= 1L) mean(under_null[discoveries]) else 0
+  return(list(n_true_discoveries = n_true_discoveries, n_discoveries = n_discoveries, fdp = fdp))
 }
 
 get_theta_from_fitted_glm <- function(fit) {
