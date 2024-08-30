@@ -99,3 +99,14 @@ double compute_mw_test_statistic(List precomp, const std::vector<int>& trt_idxs,
   double z = (statistic_mean_0 - correction)/sigma;
   return z;
 }
+
+
+//double compute_wald_test_statistic(List precomp, const std::vector<int>& trt_idxs, int n_trt) {
+//}
+
+// [[Rcpp::export]]
+void compute_wald_test_statistic(List precomp, const std::vector<int>& x, int n_trt) {
+  NumericVector y = precomp(0);
+  NumericMatrix Z = precomp(1);
+  return;
+}

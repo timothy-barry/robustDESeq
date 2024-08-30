@@ -13,3 +13,7 @@ generate_wor_sample_test <- function(n, n_trt, n_samples) {
     .Call(`_robustDESeq_generate_wor_sample_test`, n, n_trt, n_samples)
 }
 
+compute_wald_test_statistic <- function(precomp, x, n_trt) {
+    invisible(.Call(`_robustDESeq_compute_wald_test_statistic`, precomp, x, n_trt))
+}
+

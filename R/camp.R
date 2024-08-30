@@ -62,7 +62,7 @@ run_robust_nb_regression <- function(Y_list, x, Z, side = "two_tailed", h = 15L,
   if (method == "MASS") {
     precomp_list <- lapply(X = Y_list, FUN = function(y) {
       if (is.null(theta)) {
-        fit <- MASS::glm.nb(y ~ Z)
+        suppressWarnings(fit <- MASS::glm.nb(y ~ Z))
         theta <- fit$theta
       } else {
         fit <- stats::glm(y ~ Z, family = MASS::negative.binomial(theta))
@@ -72,7 +72,7 @@ run_robust_nb_regression <- function(Y_list, x, Z, side = "two_tailed", h = 15L,
     })
   } else if (method == "VGAM") {
     precomp_list <- lapply(X = Y_list, FUN = function(y) {
-      fit <- VGAM::vglm(y ~ Z, family = VGAM::negbinomial())
+      suppressWarnings(fit <- VGAM::vglm(y ~ Z, family = VGAM::negbinomial()))
       coefs <- stats::setNames(fit@coefficients[-2], NULL)
       theta <- stats::setNames(exp(fit@coefficients[2]), NULL)
       compute_precomputation_pieces(y, Z_model, coefs, theta)
