@@ -8,15 +8,19 @@ run_standard_nb_regression <- function(Y_list, x, Z, side = "two_tailed", alpha 
   if (!(side %in% c("left", "right", "two_tailed"))) stop("`side` not recognized.")
   if (method == "MASS") {
     p_values <- sapply(X = Y_list, FUN = function(y) {
-      if (is.null(theta)) {
-        suppressWarnings(fit <- MASS::glm.nb(y ~ x + Z))
-      } else {
-        fit <- stats::glm(y ~ x + Z, family = MASS::negative.binomial(theta))
-      }
-      fit$family <- stats::poisson()
-      s <- summary(fit)
-      z <- coef(s)["x", "z value"]
-      compute_gaussian_p_value(z, side)
+      # try to fit the glm and compute the p-value; otherwise, return NA
+      p <- tryCatch({
+        if (is.null(theta)) {
+          suppressWarnings(fit <- MASS::glm.nb(y ~ x + Z))
+        } else {
+          fit <- stats::glm(y ~ x + Z, family = MASS::negative.binomial(theta))
+        }
+        fit$family <- stats::poisson()
+        s <- summary(fit)
+        z <- coef(s)["x", "z value"]
+        compute_gaussian_p_value(z, side)
+      }, error = function(e) 1)
+      return(p)
     })
   } else if (method == "VGAM") {
     p_values <- sapply(X = Y_list, FUN = function(y) {
