@@ -8,7 +8,7 @@ run_standard_nb_regression <- function(Y_list, x, Z, side = "two_tailed", alpha 
   if (!(side %in% c("left", "right", "two_tailed"))) stop("`side` not recognized.")
   if (method == "MASS") {
     p_values <- sapply(X = Y_list, FUN = function(y) {
-      # try to fit the glm and compute the p-value; otherwise, return NA
+      # try to fit the glm and compute the p-value; otherwise, return 1
       p <- tryCatch({
         if (is.null(theta)) {
           suppressWarnings(fit <- MASS::glm.nb(y ~ x + Z))
@@ -49,7 +49,11 @@ run_regress_out_covariates_test <- function(Y_list, x, Z, side = "two_tailed", h
   # fit null GLMs and perform precomputation
   precomp_list <- lapply(X = Y_list, FUN = function(y) {
     if (is.null(theta)) {
-      fit <- suppressWarnings(MASS::glm.nb(y ~ Z))
+      tryCatch({
+        suppressWarnings(fit <- MASS::glm.nb(y ~ Z))
+      }, error = function(e) {
+        fit <- stats::glm(y ~ Z, family = poisson())
+      })
     } else {
       fit <- stats::glm(y ~ Z, family = MASS::negative.binomial(theta))
     }
