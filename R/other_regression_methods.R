@@ -49,10 +49,10 @@ run_regress_out_covariates_test <- function(Y_list, x, Z, side = "two_tailed", h
   # fit null GLMs and perform precomputation
   precomp_list <- lapply(X = Y_list, FUN = function(y) {
     if (is.null(theta)) {
-      tryCatch({
-        suppressWarnings(fit <- MASS::glm.nb(y ~ Z))
+      fit <- tryCatch({
+        suppressWarnings(MASS::glm.nb(y ~ Z))
       }, error = function(e) {
-        fit <- stats::glm(y ~ Z, family = poisson())
+        stats::glm(y ~ Z, family = poisson())
       })
     } else {
       fit <- stats::glm(y ~ Z, family = MASS::negative.binomial(theta))

@@ -63,13 +63,13 @@ run_robust_nb_regression <- function(Y_list, x, Z, side = "two_tailed", h = 15L,
     precomp_list <- lapply(X = Y_list, FUN = function(y) {
       # try to fit the NB glm and compute the p-value; otherwise, fit Pois GLM
       if (is.null(theta)) {
-        tryCatch({
-          suppressWarnings(fit <- MASS::glm.nb(y ~ Z))
-          theta <- fit$theta
+        fit <- tryCatch({
+          suppressWarnings(MASS::glm.nb(y ~ Z))
         }, error = function(e) {
           fit <- stats::glm(y ~ Z, family = poisson())
-          theta <- 10
+          fit$theta <- 10; fit
         })
+        theta <- fit$theta
       } else {
         fit <- stats::glm(y ~ Z, family = MASS::negative.binomial(theta))
       }
