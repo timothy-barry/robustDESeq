@@ -73,8 +73,7 @@ run_robust_nb_regression <- function(Y_list, x, Z, side = "two_tailed", h = 15L,
       } else {
         fit <- stats::glm(y ~ Z, family = MASS::negative.binomial(theta))
       }
-      coefs <- fit$coefficients
-      compute_precomputation_pieces(y, Z_model, coefs, theta)
+      compute_precomputation_pieces_v2(y, Z_model, theta, fit)
     })
   } else if (method == "VGAM") {
     precomp_list <- lapply(X = Y_list, FUN = function(y) {
@@ -110,6 +109,21 @@ compute_precomputation_pieces <- function(y, Z_model, coefs, theta) {
   U <- P_decomp$vectors
   Lambda_minus_half <- 1 / sqrt(P_decomp$values)
   D <- (Lambda_minus_half * t(U)) %*% t(wZ)
+  D_list <- apply(D, 1L, function(row) row, simplify = FALSE)
+  out <- list(a = a, w = w, D_list = D_list)
+  return(out)
+}
+
+
+compute_precomputation_pieces_v2 <- function(y, Z_model, theta, fit) {
+  mu <- stats::setNames(fit$fitted.values, NULL)
+  w <- stats::setNames(fit$weights, NULL)
+  qr <- fit$qr
+  a <- (y - mu) / (1 + mu / theta)
+  wZ <- w * Z_model
+  R <- qr.R(qr)
+  R_t_inv <- backsolve(r = R, upper.tri = TRUE, x = diag(nrow(R)), transpose = TRUE)
+  D <- R_t_inv %*% t(wZ)
   D_list <- apply(D, 1L, function(row) row, simplify = FALSE)
   out <- list(a = a, w = w, D_list = D_list)
   return(out)

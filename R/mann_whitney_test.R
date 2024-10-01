@@ -30,7 +30,7 @@ run_mann_whitney_test_asymptotic <- function(Y_list, x, Z, side = "two_tailed", 
     sapply(X = Y_list, FUN = function(y) {
       s_trt <- y[x == 1L]
       s_cntrl <- y[x == 0L]
-      fit <- stats::wilcox.test(x = s_trt, y = s_cntrl, alternative = alternative, correct = TRUE)
+      fit <- stats::wilcox.test(x = s_trt, y = s_cntrl, alternative = alternative, correct = TRUE, exact = FALSE)
       fit$p.value
     })
   }
