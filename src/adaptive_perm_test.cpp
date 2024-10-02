@@ -12,7 +12,7 @@ List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int side_
   // define variables and objects
   int n = x.length(), m = precomp_list.length(), n_trt;
   std::vector<bool> active_set(m, true), futility_set(m, false), rejected_set(m, false);
-  std::vector<double> stop_times(m), original_statistics(m), p_values(m), n_right_losses(m, 0), n_losses(m, 0);
+  std::vector<double> stop_times(m), original_statistics(m), p_values(m), n_right_losses(m, 0), n_left_losses(m, 0), n_losses(m, 0);
   std::vector<int> trt_idxs;
   double curr_test_stat, t = 0, h_doub = static_cast<double>(h), m_doub = static_cast<double>(m), threshold, n_in_active_set, max_n_losses_active_set;
 
@@ -61,14 +61,15 @@ List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int side_
         curr_test_stat = funct(precomp_list(i), random_samp, n_trt);
         // determine whether we have a loss; if so, increment n_right_losses
         n_right_losses[i] += (curr_test_stat >= original_statistics[i] ? 1.0 : 0.0);
+        n_left_losses[i] += (curr_test_stat <= original_statistics[i] ? 1.0 : 0.0);
       }
     }
 
     // update n_losses
     if (side_code == -1) {
-      for (int i = 0; i < m; i ++) n_losses[i] = t - n_right_losses[i];
+      n_losses = n_left_losses;
     } else if (side_code == 0) {
-      for (int i = 0; i < m; i ++) n_losses[i] = std::min(n_right_losses[i], t - n_right_losses[i]);
+      for (int i = 0; i < m; i ++) n_losses[i] = std::min(n_left_losses[i], n_right_losses[i]);
     } else {
       n_losses = n_right_losses;
     }

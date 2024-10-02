@@ -54,6 +54,9 @@
 #' residual_res <- run_regress_out_covariates_test(Y_list = Y_list, x = x, Z = Z, side = "right")
 #' get_result_metrics(residual_res, under_null)
 run_robust_nb_regression <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, method = "MASS", theta = NULL, adaptive_permutation_test = TRUE) {
+  if (2/choose(length(x), sum(x)) > 5e-4) {
+    warning("Your sample size may be too small for the permutation test to make any significant hits. Consider using a different method (e.g., DESeq2) or increasing your sample size.")
+  }
   Z_model <- cbind(1, Z)
   colnames(Z_model) <- rownames(Z_model) <- NULL
   side_code <- get_side_code(side)
