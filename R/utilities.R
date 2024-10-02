@@ -12,10 +12,12 @@ compute_t_dist_p_value <- function(t, deg_of_freedom, side) {
          two_tailed = 2 * pt(q = abs(t), df = deg_of_freedom, lower.tail = FALSE))
 }
 
-get_result_df <- function(p_values, rejected) {
-  tibble::tibble(p_value = p_values,
-                 rejected = rejected,
-                 hyp_idx = seq_len(length(p_values))) |> dplyr::arrange(p_value)
+get_result_df <- function(p_values, rejected, order_result_df) {
+  out <- tibble::tibble(p_value = p_values,
+                        rejected = rejected,
+                        hyp_idx = seq_len(length(p_values)))
+  if (order_result_df) out <- out |> dplyr::arrange(p_value)
+  return(out)
 }
 
 get_side_code <- function(side) {
