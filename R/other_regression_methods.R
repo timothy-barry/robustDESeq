@@ -33,7 +33,7 @@ run_standard_nb_regression <- function(Y_list, x, Z, side = "two_tailed", alpha 
     stop("Method not recognized.")
   }
   rejected <- stats::p.adjust(p_values, method = "BH") < alpha
-  get_result_df(p_values, rejected)
+  data.frame(p_value = p_values, rejected = rejected)
 }
 
 
@@ -61,7 +61,7 @@ run_regress_out_covariates_test <- function(Y_list, x, Z, side = "two_tailed", h
     list(r)
   })
   result <- run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, "compute_mean_over_treated_units")
-  get_result_df(result$p_values, result$rejected)
+  as.data.frame(result) |> setNames(c("p_value", "rejected", "n_losses", "stop_time"))
 }
 
 
@@ -84,5 +84,5 @@ run_linear_model <- function(Y_list, x, Z, side = "two_tailed", alpha = 0.1) {
     compute_t_dist_p_value(t, deg_of_freedom, side)
   })
   rejected <- stats::p.adjust(p_values, method = "BH") < alpha
-  get_result_df(p_values, rejected)
+  data.frame(p_value = p_values, rejected = rejected)
 }

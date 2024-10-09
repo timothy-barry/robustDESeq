@@ -5,7 +5,7 @@
 #'
 #' @return a data frame containing the results
 #' @export
-run_mann_whitney_test_asymptotic <- function(Y_list, x, Z, side = "two_tailed", implementation = "custom", alpha = 0.1, order_result_df = TRUE) {
+run_mann_whitney_test_asymptotic <- function(Y_list, x, Z, side = "two_tailed", implementation = "custom", alpha = 0.1) {
   if (!(implementation %in% c("custom", "r"))) stop("`implementation` not recognized.")
   if (implementation == "r") {
     alternative <- switch(side, two_tailed = "two.sided", right = "greater", left = "less")
@@ -34,9 +34,8 @@ run_mann_whitney_test_asymptotic <- function(Y_list, x, Z, side = "two_tailed", 
       fit$p.value
     })
   }
-
   rejected <- stats::p.adjust(p_values, method = "BH") < alpha
-  get_result_df(p_values, rejected, order_result_df)
+  data.frame(p_value = p_values, rejected = rejected)
 }
 
 
@@ -46,7 +45,7 @@ run_mann_whitney_test_asymptotic <- function(Y_list, x, Z, side = "two_tailed", 
 #'
 #' @return  a data frame containing the results
 #' @export
-run_mann_whitney_test_permutations <-  function(Y_list, x, Z, side = "two_tailed", h = 15L, B = NULL, alpha = 0.1, adaptive_permutation_test = TRUE, order_result_df = TRUE) {
+run_mann_whitney_test_permutations <- function(Y_list, x, Z, side = "two_tailed", h = 15L, B = NULL, alpha = 0.1, adaptive_permutation_test = TRUE) {
   if (2/choose(length(x), sum(x)) > 5e-4) {
     warning("Your sample size may be too small for the permutation test to make any significant hits. Consider using a different method (e.g., DESeq2) or increasing your sample size.")
   }
@@ -63,11 +62,12 @@ run_mann_whitney_test_permutations <-  function(Y_list, x, Z, side = "two_tailed
   # run the permutation test
   if (adaptive_permutation_test) {
     result <- run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, "compute_mw_test_statistic")
-    p_values <- result$p_values; rejected <- result$rejected
+    out <- as.data.frame(result) |> setNames(c("p_value", "rejected", "n_losses", "stop_time"))
   } else {
     if (is.null(B)) B <- round(10 * length(Y_list)/alpha)
     p_values <- run_permutation_test(precomp_list, x, side_code, B, "compute_mw_test_statistic")
     rejected <- stats::p.adjust(p_values, method = "BH") < alpha
+    out <- data.frame(p_value = p_values, rejected = rejected)
   }
-  get_result_df(p_values = p_values, rejected = rejected, order_result_df = order_result_df)
+  return(out)
 }

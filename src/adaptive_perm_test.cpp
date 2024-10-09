@@ -103,11 +103,22 @@ List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int side_
       break;
     }
   }
+  // if any hypotheses remain in the active set, (implicitly) move to the futility set and update the stop time
+  if (n_in_active_set >= 1) {
+    for (int i = 0; i < m; i ++) {
+      if (active_set[i]) {
+        stop_times[i] = t;
+      }
+    }
+  }
+
   // compute the p-values
   for (int i = 0; i < m; i ++) {
-    p_values[i] = (side_code == 0 ? 2.0 : 1.0) * h_doub/(stop_times[i] - static_cast<double>(n_losses[i]) + h_doub);
+    p_values[i] = std::min(1.0, (side_code == 0 ? 2.0 : 1.0) * h_doub/(stop_times[i] - static_cast<double>(n_losses[i]) + h_doub));
   }
 
   return List::create(Named("p_values") = p_values,
-                      Named("rejected") = rejected_set);
+                      Named("rejected") = rejected_set,
+                      Named("n_losses") = n_losses,
+                      Named("stop_times") = stop_times);
 }
