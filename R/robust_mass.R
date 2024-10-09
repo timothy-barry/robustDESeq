@@ -53,7 +53,7 @@
 #' ###########################
 #' residual_res <- run_regress_out_covariates_test(Y_list = Y_list, x = x, Z = Z, side = "right")
 #' get_result_metrics(residual_res, under_null)
-run_robust_nb_regression <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, method = "MASS", theta = NULL) {
+run_robust_nb_regression <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, method = "MASS", theta = NULL, max_iterations = 50000L) {
   if (2/choose(length(x), sum(x)) > 5e-4) {
     warning("Your sample size may be too small for the permutation test to make any significant hits. Consider using a different method (e.g., DESeq2) or increasing your sample size.")
   }
@@ -89,7 +89,7 @@ run_robust_nb_regression <- function(Y_list, x, Z, side = "two_tailed", h = 15L,
     stop("Method not recognized.")
   }
 
-  result <- run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, "compute_score_stat")
+  result <- run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, max_iterations, "compute_score_stat")
   as.data.frame(result) |> setNames(c("p_value", "rejected", "n_losses", "stop_time"))
 }
 

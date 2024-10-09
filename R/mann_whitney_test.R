@@ -45,7 +45,7 @@ run_mann_whitney_test_asymptotic <- function(Y_list, x, Z, side = "two_tailed", 
 #'
 #' @return  a data frame containing the results
 #' @export
-run_mann_whitney_test_permutations <- function(Y_list, x, Z, side = "two_tailed", h = 15L, B = NULL, alpha = 0.1, adaptive_permutation_test = TRUE) {
+run_mann_whitney_test_permutations <- function(Y_list, x, Z, side = "two_tailed", h = 15L, B = NULL, alpha = 0.1, adaptive_permutation_test = TRUE, max_iterations = 50000L) {
   if (2/choose(length(x), sum(x)) > 5e-4) {
     warning("Your sample size may be too small for the permutation test to make any significant hits. Consider using a different method (e.g., DESeq2) or increasing your sample size.")
   }
@@ -61,7 +61,7 @@ run_mann_whitney_test_permutations <- function(Y_list, x, Z, side = "two_tailed"
   })
   # run the permutation test
   if (adaptive_permutation_test) {
-    result <- run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, "compute_mw_test_statistic")
+    result <- run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, max_iterations, "compute_mw_test_statistic")
     out <- as.data.frame(result) |> setNames(c("p_value", "rejected", "n_losses", "stop_time"))
   } else {
     if (is.null(B)) B <- round(10 * length(Y_list)/alpha)

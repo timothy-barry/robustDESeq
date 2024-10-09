@@ -11,8 +11,8 @@ Rcpp::Rostream<false>& Rcpp::Rcerr = Rcpp::Rcpp_cerr_get();
 #endif
 
 // run_adaptive_permutation_test
-List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int side_code, int h, double alpha, std::string test_stat_str);
-RcppExport SEXP _robustDESeq_run_adaptive_permutation_test(SEXP precomp_listSEXP, SEXP xSEXP, SEXP side_codeSEXP, SEXP hSEXP, SEXP alphaSEXP, SEXP test_stat_strSEXP) {
+List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int side_code, int h, double alpha, int max_iterations, std::string test_stat_str);
+RcppExport SEXP _robustDESeq_run_adaptive_permutation_test(SEXP precomp_listSEXP, SEXP xSEXP, SEXP side_codeSEXP, SEXP hSEXP, SEXP alphaSEXP, SEXP max_iterationsSEXP, SEXP test_stat_strSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -21,8 +21,9 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type side_code(side_codeSEXP);
     Rcpp::traits::input_parameter< int >::type h(hSEXP);
     Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< int >::type max_iterations(max_iterationsSEXP);
     Rcpp::traits::input_parameter< std::string >::type test_stat_str(test_stat_strSEXP);
-    rcpp_result_gen = Rcpp::wrap(run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, test_stat_str));
+    rcpp_result_gen = Rcpp::wrap(run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, max_iterations, test_stat_str));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -68,7 +69,7 @@ END_RCPP
 }
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_robustDESeq_run_adaptive_permutation_test", (DL_FUNC) &_robustDESeq_run_adaptive_permutation_test, 6},
+    {"_robustDESeq_run_adaptive_permutation_test", (DL_FUNC) &_robustDESeq_run_adaptive_permutation_test, 7},
     {"_robustDESeq_run_permutation_test", (DL_FUNC) &_robustDESeq_run_permutation_test, 5},
     {"_robustDESeq_generate_wor_sample_test", (DL_FUNC) &_robustDESeq_generate_wor_sample_test, 3},
     {"_robustDESeq_compute_wald_test_statistic", (DL_FUNC) &_robustDESeq_compute_wald_test_statistic, 3},

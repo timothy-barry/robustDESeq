@@ -8,7 +8,7 @@ using namespace Rcpp;
 
 
 // [[Rcpp::export]]
-List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int side_code, int h, double alpha, std::string test_stat_str) {
+List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int side_code, int h, double alpha, int max_iterations, std::string test_stat_str) {
   // define variables and objects
   int n = x.length(), m = precomp_list.length(), n_trt;
   std::vector<bool> active_set(m, true), futility_set(m, false), rejected_set(m, false);
@@ -48,7 +48,7 @@ List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int side_
   for (int i = 0; i < n; i++) random_samp[i] = i;
 
   // iterate through time
-  for (int k = 0; k < 50000; k++) {
+  for (int k = 0; k < max_iterations; k++) {
     // increment time
     t++;
     // generate a random permutation

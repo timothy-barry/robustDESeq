@@ -43,7 +43,7 @@ run_standard_nb_regression <- function(Y_list, x, Z, side = "two_tailed", alpha 
 #'
 #' @return a data frame containing the p-values and rejections
 #' @export
-run_regress_out_covariates_test <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, resid_type = c("response", "deviance", "pearson")[1], theta = NULL) {
+run_regress_out_covariates_test <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, resid_type = c("response", "deviance", "pearson")[1], theta = NULL, max_iterations = 50000L) {
   if (!(resid_type %in% c("response", "deviance", "pearson"))) stop("Residual type not recognized.")
   side_code <- get_side_code(side)
   # fit null GLMs and perform precomputation
@@ -60,7 +60,7 @@ run_regress_out_covariates_test <- function(Y_list, x, Z, side = "two_tailed", h
     r <- stats::setNames(stats::resid(fit, type = resid_type), NULL)
     list(r)
   })
-  result <- run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, "compute_mean_over_treated_units")
+  result <- run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, max_iterations, "compute_mean_over_treated_units")
   as.data.frame(result) |> setNames(c("p_value", "rejected", "n_losses", "stop_time"))
 }
 
