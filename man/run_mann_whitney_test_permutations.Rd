@@ -10,8 +10,10 @@ run_mann_whitney_test_permutations(
   Z,
   side = "two_tailed",
   h = 15L,
+  B = NULL,
   alpha = 0.1,
-  adaptive_permutation_test = TRUE
+  adaptive_permutation_test = TRUE,
+  max_iterations = 50000L
 )
 }
 \arguments{

@@ -11,7 +11,9 @@ run_regress_out_covariates_test(
   side = "two_tailed",
   h = 15L,
   alpha = 0.1,
-  resid_type = c("response", "deviance", "pearson")[1]
+  resid_type = c("response", "deviance", "pearson")[1],
+  theta = NULL,
+  max_iterations = 50000L
 )
 }
 \arguments{
