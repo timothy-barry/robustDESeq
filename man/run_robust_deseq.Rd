@@ -25,4 +25,5 @@ design(dds) <- formula(~donor_id + stim_status + grna)
 row_sums <- rowSums(assays(dds)$counts)
 highly_expressed <- row_sums >= 6
 dds <- dds[highly_expressed,]
+res <- run_robust_deseq(dds)
 }

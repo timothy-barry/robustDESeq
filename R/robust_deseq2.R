@@ -18,6 +18,7 @@
 #' row_sums <- rowSums(assays(dds)$counts)
 #' highly_expressed <- row_sums >= 6
 #' dds <- dds[highly_expressed,]
+#' res <- run_robust_deseq(dds)
 run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, max_iterations = 200000L) {
   # get the side of the test
   side_code <- get_side_code(side)
@@ -43,18 +44,19 @@ run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, max
   thetas <- 1/dispersions(dds)
   Z_model <- stats::model.matrix(design(dds), colData(dds))
   beta_mat <- coef(dds)
-  rownames(beta_mat) <- colnames(beta_mat) <- colnames(Z_model) <- rownames(Z_model) <- names(size_factors) <- NULL
   size_factors <- sizeFactors(dds)
+  rownames(beta_mat) <- colnames(beta_mat) <- colnames(Z_model) <- rownames(Z_model) <- names(size_factors) <- NULL
   mu_mat <- size_factors * t(exp(Z_model %*% t(beta_mat)))
 
   # perform the precomputation
   precomp_list <- lapply(X = seq_len(nrow(count_matrix)), FUN = function(i) {
-    compute_precomputation_pieces_deseq(count_matrix[i,], mu_mat[i,], Z_model, theta)
+    compute_precomputation_pieces_deseq(count_matrix[i,], mu_mat[i,], Z_model, thetas[i])
   })
 
   # run the permutation test
+  print("Running permutations.")
   result <- run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, max_iterations, "compute_score_stat")
-  df <- as.data.frame(result) |> setNames(c("p_value", "rejected", "n_losses", "stop_time"))
+  as.data.frame(result) |> setNames(c("p_value", "rejected", "n_losses", "stop_time"))
 }
 
 
