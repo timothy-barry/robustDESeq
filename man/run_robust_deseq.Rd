@@ -2,7 +2,7 @@
 % Please edit documentation in R/robust_deseq2.R
 \name{run_robust_deseq}
 \alias{run_robust_deseq}
-\title{Title}
+\title{Run robust DESeq}
 \usage{
 run_robust_deseq(
   dds,
@@ -13,17 +13,26 @@ run_robust_deseq(
 )
 }
 \arguments{
-\item{max_iterations}{}
+\item{dds}{a DESeq object}
+
+\item{side}{the side of the test, one of "left", "right", or "two_tailed"}
+
+\item{h}{tuning parameter for the anytime-valid permutation test}
+
+\item{alpha}{nominal FDR of the BH procedure}
+}
+\value{
+the result data frame
 }
 \description{
-Title
+Run robust DESeq
 }
 \examples{
 library(DESeq2)
 dds <- readRDS("/Users/tib163/research_offsite/projects/camp/data/arrayed_crispr/deseq_object.rds")
 design(dds) <- formula(~donor_id + stim_status + grna)
 row_sums <- rowSums(assays(dds)$counts)
-highly_expressed <- row_sums >= 6
+highly_expressed <- row_sums >= 5
 dds <- dds[highly_expressed,]
 res <- run_robust_deseq(dds)
 }

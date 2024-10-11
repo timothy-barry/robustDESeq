@@ -1,14 +1,9 @@
-#' Title
+#' Run robust DESeq
 #'
-#' @param Y_list
-#' @param x
-#' @param Z
-#' @param side
-#' @param h
-#' @param alpha
-#' @param max_iterations
+#' @param dds a DESeq object
+#' @inheritParams run_robust_nb_regression
 #'
-#' @return
+#' @return the result data frame
 #' @export
 #'
 #' @examples
@@ -16,7 +11,7 @@
 #' dds <- readRDS("/Users/tib163/research_offsite/projects/camp/data/arrayed_crispr/deseq_object.rds")
 #' design(dds) <- formula(~donor_id + stim_status + grna)
 #' row_sums <- rowSums(assays(dds)$counts)
-#' highly_expressed <- row_sums >= 6
+#' highly_expressed <- row_sums >= 5
 #' dds <- dds[highly_expressed,]
 #' res <- run_robust_deseq(dds)
 run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, max_iterations = 200000L) {
@@ -37,15 +32,18 @@ run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, max
   count_matrix <- SummarizedExperiment::assays(dds)$counts
   rownames(count_matrix) <- colnames(count_matrix) <- NULL
 
-  # run the deseq regression under the null hypothesis
-  dds <- DESeq2::DESeq(dds)
+  # run deseq2 under the null hypothesis; for now, set size factors to 1
+  # dds <- estimateSizeFactors(dds)
+  sizeFactors(dds) <- 1
+  dds <- estimateDispersions(dds, fitType = "local")
+  fit <- fitNbinomGLMs(object = dds)
+  beta_mat <- fit$betaMatrix * log(2)
 
   # get mu and thetas
   thetas <- 1/dispersions(dds)
   Z_model <- stats::model.matrix(design(dds), colData(dds))
-  beta_mat <- coef(dds)
   size_factors <- sizeFactors(dds)
-  rownames(beta_mat) <- colnames(beta_mat) <- colnames(Z_model) <- rownames(Z_model) <- names(size_factors) <- NULL
+  colnames(Z_model) <- rownames(Z_model) <- names(size_factors) <- NULL
   mu_mat <- size_factors * t(exp(Z_model %*% t(beta_mat)))
 
   # perform the precomputation
