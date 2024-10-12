@@ -44,11 +44,11 @@
 #' fits <- lapply(Y_list, function(y) {
 #'   fit_theta_est_mass <- MASS::glm.nb(formula = y ~ x + Z)
 #' })
-generate_glm_data <- function(design_matrix, coefficients, family_object, add_intercept = TRUE) {
+generate_glm_data <- function(design_matrix, coefficients, family_object, offsets = 0, add_intercept = TRUE) {
   if (!is(design_matrix, "matrix")) stop("`design_matrix` must be an object of class matrix.")
   family_object <- family_object |> augment_family_object()
   if (add_intercept) design_matrix <- cbind(1, design_matrix)
-  eta <- as.numeric(design_matrix %*% coefficients)
+  eta <- as.numeric(design_matrix %*% coefficients + offsets)
   mus <- family_object$linkinv(eta)
   y <- family_object$generate_samples(length(mus), mus)
   return(y)

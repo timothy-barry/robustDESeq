@@ -8,6 +8,7 @@ generate_glm_data(
   design_matrix,
   coefficients,
   family_object,
+  offsets = 0,
   add_intercept = TRUE
 )
 }

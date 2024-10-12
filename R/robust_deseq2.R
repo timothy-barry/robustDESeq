@@ -14,7 +14,7 @@
 #' highly_expressed <- row_sums >= 5
 #' dds <- dds[highly_expressed,]
 #' res <- run_robust_deseq(dds)
-run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, max_iterations = 200000L) {
+run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, size_factors = NULL, dispersion_estimation = "local", max_iterations = 200000L) {
   # get the side of the test
   side_code <- get_side_code(side)
 
@@ -32,19 +32,24 @@ run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, max
   count_matrix <- SummarizedExperiment::assays(dds)$counts
   rownames(count_matrix) <- colnames(count_matrix) <- NULL
 
-  # run deseq2 under the null hypothesis; for now, set size factors to 1
-  # dds <- estimateSizeFactors(dds)
-  sizeFactors(dds) <- 1
-  dds <- estimateDispersions(dds, fitType = "local")
-  fit <- fitNbinomGLMs(object = dds)
-  beta_mat <- fit$betaMatrix * log(2)
+  # run deseq
+  if (is.null(size_factors)) {
+    dds <- DESeq2::estimateSizeFactors(dds)
+  } else {
+    DESeq2::sizeFactors(dds) <- DESeq2::size_factors
+  }
+  dds <- DESeq2::estimateDispersions(dds, fitType = dispersion_estimation)
+  dds <- DESeq2::nbinomWaldTest(object = dds)
 
-  # get mu and thetas
-  thetas <- 1/dispersions(dds)
-  Z_model <- stats::model.matrix(design(dds), colData(dds))
-  size_factors <- sizeFactors(dds)
-  colnames(Z_model) <- rownames(Z_model) <- names(size_factors) <- NULL
-  mu_mat <- size_factors * t(exp(Z_model %*% t(beta_mat)))
+  # get mu, thetas, and Z_model
+  thetas <- 1/DESeq2::dispersions(dds)
+  Z_model <- stats::model.matrix(DESeq2::design(dds), SummarizedExperiment::colData(dds))
+  mu_mat <- SummarizedExperiment::assays(dds)$mu
+
+  # alternately, manually compute mu_mat
+  # beta_mat <- coef(dds) * log(2)
+  # size_factors <- sizeFactors(dds)
+  # mu_mat_manual <- t(exp(Z_model %*% t(beta_mat) + log(size_factors)))
 
   # perform the precomputation
   precomp_list <- lapply(X = seq_len(nrow(count_matrix)), FUN = function(i) {
@@ -59,60 +64,55 @@ run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, max
 
 
 #' Run robust DESeq (list interface)
-#'
-#' @inheritParams run_robust_nb_regression
-#'
-#' @return results data frame
 #' @export
-#'
 #' @examples
 #' n <- 100L
 #' m <- 500L
 #' theta_gt <- 5
+#' offsets <- log(rpois(n = n, lambda = 50))
 #' Z <- MASS::mvrnorm(n = n, mu = c(-0.5, 0.5), Sigma = toeplitz(c(1, 0.5)))
-# x <- rbinom(n = n, size = 1, prob = binomial()$linkinv(-1 + as.numeric(Z %*% c(0.8, 0.7))))
 #' x <- rbinom(n = n, size = 1, prob = 0.3)
-#" colnames(Z) <- c("1", "2")
+#' colnames(Z) <- c("1", "2")
 #' family_object <- MASS::negative.binomial(theta_gt)
 #' design_matrix <- cbind(x, Z)
 #' colnames(design_matrix) <- c("x", "z1", "z2")
-#' null_coefs <- log(c(25, 1.0, 0.8, 1.1))
-#' alt_coefs <- log(c(25, 1.5, 0.8, 1.1))
+#' null_coefs <- log(c(5, 1.0, 0.8, 1.1))
+#' alt_coefs <- log(c(5, 1.5, 0.8, 1.1))
 #' under_null <- sample(c(rep(TRUE, 0.9 * m), rep(FALSE, 0.1 * m)))
 #' Y_list <- sapply(X = seq_len(m), FUN = function(i) {
 #'  generate_glm_data(design_matrix = design_matrix,
 #'                    coefficients = if (under_null[i]) null_coefs else alt_coefs,
 #'                    family_object = family_object,
-#'                    add_intercept = TRUE)
+#'                    add_intercept = TRUE,
+#'                    offsets = offsets)
 #' }, simplify = FALSE)
-#' h <- 15L; alpha <- 0.1; theta <- 30
 #'
-#' # mass implementation
-#' res_robust_nb <- run_robust_nb_regression(Y_list, x, Z)
-#' get_result_metrics(res_robust_nb, under_null)
-#'
-#' # deseq implementation
-#' res_deseq <- run_deseq_list_interface(Y_list, x, Z, robust = FALSE)
-#' get_result_metrics(res_deseq, under_null)
-run_deseq_list_interface <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, robust = TRUE, max_iterations = 200000L) {
-  Y_mat <- sapply(X = Y_list, FUN = identity) |> t()
-  x_fct <- factor(x = x, levels = c(0L, 1L), labels = c("untrt", "trt"))
-  covariate_matrix <- data.frame(Z, x_fct)
-  colnames(covariate_matrix) <- c(paste0("z", seq_len(ncol(Z))), "x")
-  form <- paste0("~", paste0(colnames(covariate_matrix), collapse = "+")) |> as.formula()
-  dds <- DESeq2::DESeqDataSetFromMatrix(countData = Y_mat,
-                                        colData = covariate_matrix,
-                                        design = form)
-  # pass to `run_robust_deseq`
-  if (robust) {
-    res <- run_robust_deseq(dds = dds, side = side, h = h, alpha = alpha, max_iterations = max_iterations)
+#' res <- run_robust_deseq_list_interface(Y_list, x, Z)
+run_robust_deseq_list_interface <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, size_factors = NULL, dispersion_estimation = "local", max_iterations = 200000L) {
+  dds <- make_deseq_object(Y_list, x, Z)
+  out <- run_robust_deseq(dds = dds, side = side, h = h,
+                          alpha = alpha, size_factors = size_factors,
+                          dispersion_estimation = dispersion_estimation,
+                          max_iterations = max_iterations)
+  return(out)
+}
+
+
+#' Run standard DESeq (list interface)
+#' @export
+run_standard_deseq_list_interface <- function(Y_list, x, Z, side = "two_tailed", alpha = 0.1, dispersion_estimation = "local", size_factors = NULL) {
+  dds <- make_deseq_object(Y_list, x, Z)
+  if (is.null(size_factors)) {
+    dds <- DESeq2::estimateSizeFactors(dds)
   } else {
-    dds <- DESeq2::DESeq(dds)
-    res_orig <- DESeq2::results(dds, independentFiltering = FALSE, cooksCutoff = FALSE)
-    rejected <- p.adjust(p = res_orig$pvalue, method = "BH") < alpha
-    res <- data.frame(p_value = res_orig$pvalue, rejected = rejected)
+    sizeFactors(dds) <- DESeq2::size_factors
   }
-  return(res)
+  dds <- DESeq2::estimateDispersions(dds, fitType = dispersion_estimation)
+  dds <- DESeq2::nbinomWaldTest(dds)
+  res <- DESeq2::results(dds, independentFiltering = FALSE, cooksCutoff = FALSE)
+  rejected <- p.adjust(p = res$pvalue, method = "BH") < alpha
+  out <- data.frame(p_value = res$pvalue, rejected = rejected)
+  return(out)
 }
 
 
@@ -129,4 +129,17 @@ compute_precomputation_pieces_deseq <- function(y, mu, Z_model, theta) {
   D_list <- apply(D, 1L, function(row) row, simplify = FALSE)
   out <- list(a = a, w = w, D_list = D_list)
   return(out)
+}
+
+
+make_deseq_object <- function(Y_list, x, Z) {
+  Y_mat <- sapply(X = Y_list, FUN = identity) |> t()
+  x_fct <- factor(x = x, levels = c(0L, 1L), labels = c("untrt", "trt"))
+  covariate_matrix <- data.frame(Z, x_fct)
+  colnames(covariate_matrix) <- c(paste0("z", seq_len(ncol(Z))), "x")
+  form <- paste0("~", paste0(colnames(covariate_matrix), collapse = "+")) |> as.formula()
+  dds <- DESeq2::DESeqDataSetFromMatrix(countData = Y_mat,
+                                        colData = covariate_matrix,
+                                        design = form)
+  return(dds)
 }

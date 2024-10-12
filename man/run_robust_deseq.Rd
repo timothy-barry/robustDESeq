@@ -9,6 +9,8 @@ run_robust_deseq(
   side = "two_tailed",
   h = 15L,
   alpha = 0.1,
+  size_factors = NULL,
+  dispersion_estimation = "local",
   max_iterations = 200000L
 )
 }
