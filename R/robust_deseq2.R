@@ -14,7 +14,7 @@
 #' highly_expressed <- row_sums >= 5
 #' dds <- dds[highly_expressed,]
 #' res <- run_robust_deseq(dds)
-run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, size_factors = NULL, dispersion_estimation = "local", max_iterations = 200000L) {
+run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, size_factors = NULL, size_factor_estimation = "default", dispersion_estimation = "local", max_iterations = 200000L) {
   # get the side of the test
   side_code <- get_side_code(side)
 
@@ -35,7 +35,14 @@ run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, siz
   # run deseq
   # 1. size factors
   if (is.null(size_factors)) {
-    dds <- DESeq2::estimateSizeFactors(dds)
+    if (size_factor_estimation == "default") {
+      dds <- DESeq2::estimateSizeFactors(dds)
+    } else if (size_factor_estimation == "library_size") {
+      lib_sizes <- colSums(SummarizedExperiment::assays(dds)$counts)
+      DESeq2::sizeFactors(dds) <- lib_sizes/mean(lib_sizes)
+    } else {
+      stop("`size_factor_estimation` should be `default` or `library_size`.")
+    }
   } else {
     DESeq2::sizeFactors(dds) <- size_factors
   }
@@ -74,32 +81,32 @@ run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, siz
 #' Run robust DESeq (list interface)
 #' @export
 #' @examples
-#' n <- 100L
+#' n <- 50L
 #' m <- 500L
-#' theta_gt <- 5
-#' offsets <- log(rpois(n = n, lambda = 50))
-#' Z <- MASS::mvrnorm(n = n, mu = c(-0.5, 0.5), Sigma = toeplitz(c(1, 0.5)))
+#' theta_gt <- 10
+#' size_factors <- runif(n = n, min = 0.5, max = 1.5)
+#' Z <- MASS::mvrnorm(n = n, mu = c(-0.5, 0.5), Sigma = toeplitz(c(1, 0.2)))
 #' x <- rbinom(n = n, size = 1, prob = 0.3)
 #' colnames(Z) <- c("1", "2")
 #' family_object <- MASS::negative.binomial(theta_gt)
 #' design_matrix <- cbind(x, Z)
 #' colnames(design_matrix) <- c("x", "z1", "z2")
-#' null_coefs <- log(c(5, 1.0, 0.8, 1.1))
-#' alt_coefs <- log(c(5, 1.5, 0.8, 1.1))
+#' null_coefs <- log(c(80, 1.0, 0.8, 1.1))
+#' alt_coefs <- log(c(80, 1.5, 0.8, 1.1))
 #' under_null <- sample(c(rep(TRUE, 0.9 * m), rep(FALSE, 0.1 * m)))
 #' Y_list <- sapply(X = seq_len(m), FUN = function(i) {
 #'  generate_glm_data(design_matrix = design_matrix,
 #'                    coefficients = if (under_null[i]) null_coefs else alt_coefs,
 #'                    family_object = family_object,
 #'                    add_intercept = TRUE,
-#'                    offsets = offsets)
+#'                    offsets = log(size_factors))
 #' }, simplify = FALSE)
 #'
 #' res <- run_robust_deseq_list_interface(Y_list, x, Z)
-run_robust_deseq_list_interface <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, size_factors = NULL, dispersion_estimation = "local", max_iterations = 200000L) {
+run_robust_deseq_list_interface <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, size_factors = NULL, size_factor_estimation = "default", dispersion_estimation = "local", max_iterations = 200000L) {
   dds <- make_deseq_object(Y_list, x, Z)
   out <- run_robust_deseq(dds = dds, side = side, h = h,
-                          alpha = alpha, size_factors = size_factors,
+                          alpha = alpha, size_factors = size_factors, size_factor_estimation = size_factor_estimation,
                           dispersion_estimation = dispersion_estimation,
                           max_iterations = max_iterations)
   return(out)

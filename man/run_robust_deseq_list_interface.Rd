@@ -12,6 +12,7 @@ run_robust_deseq_list_interface(
   h = 15L,
   alpha = 0.1,
   size_factors = NULL,
+  size_factor_estimation = "default",
   dispersion_estimation = "local",
   max_iterations = 200000L
 )
@@ -20,25 +21,25 @@ run_robust_deseq_list_interface(
 Run robust DESeq (list interface)
 }
 \examples{
-n <- 100L
+n <- 50L
 m <- 500L
-theta_gt <- 5
-offsets <- log(rpois(n = n, lambda = 50))
-Z <- MASS::mvrnorm(n = n, mu = c(-0.5, 0.5), Sigma = toeplitz(c(1, 0.5)))
+theta_gt <- 10
+size_factors <- runif(n = n, min = 0.5, max = 1.5)
+Z <- MASS::mvrnorm(n = n, mu = c(-0.5, 0.5), Sigma = toeplitz(c(1, 0.2)))
 x <- rbinom(n = n, size = 1, prob = 0.3)
 colnames(Z) <- c("1", "2")
 family_object <- MASS::negative.binomial(theta_gt)
 design_matrix <- cbind(x, Z)
 colnames(design_matrix) <- c("x", "z1", "z2")
-null_coefs <- log(c(5, 1.0, 0.8, 1.1))
-alt_coefs <- log(c(5, 1.5, 0.8, 1.1))
+null_coefs <- log(c(80, 1.0, 0.8, 1.1))
+alt_coefs <- log(c(80, 1.5, 0.8, 1.1))
 under_null <- sample(c(rep(TRUE, 0.9 * m), rep(FALSE, 0.1 * m)))
 Y_list <- sapply(X = seq_len(m), FUN = function(i) {
  generate_glm_data(design_matrix = design_matrix,
                    coefficients = if (under_null[i]) null_coefs else alt_coefs,
                    family_object = family_object,
                    add_intercept = TRUE,
-                   offsets = offsets)
+                   offsets = log(size_factors))
 }, simplify = FALSE)
 
 res <- run_robust_deseq_list_interface(Y_list, x, Z)
