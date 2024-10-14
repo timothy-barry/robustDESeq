@@ -37,7 +37,7 @@ run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, siz
   if (is.null(size_factors)) {
     dds <- DESeq2::estimateSizeFactors(dds)
   } else {
-    DESeq2::sizeFactors(dds) <- DESeq2::size_factors
+    DESeq2::sizeFactors(dds) <- size_factors
   }
   # 2. dispersion
   if (dispersion_estimation == "raw") {
@@ -113,7 +113,7 @@ run_standard_deseq_list_interface <- function(Y_list, x, Z, side = "two_tailed",
   if (is.null(size_factors)) {
     dds <- DESeq2::estimateSizeFactors(dds)
   } else {
-    sizeFactors(dds) <- DESeq2::size_factors
+    DESeq2::sizeFactors(dds) <- size_factors
   }
   dds <- DESeq2::estimateDispersions(dds, fitType = dispersion_estimation)
   dds <- DESeq2::nbinomWaldTest(dds)
