@@ -33,12 +33,20 @@ run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, siz
   rownames(count_matrix) <- colnames(count_matrix) <- NULL
 
   # run deseq
+  # 1. size factors
   if (is.null(size_factors)) {
     dds <- DESeq2::estimateSizeFactors(dds)
   } else {
     DESeq2::sizeFactors(dds) <- DESeq2::size_factors
   }
-  dds <- DESeq2::estimateDispersions(dds, fitType = dispersion_estimation)
+  # 2. dispersion
+  if (dispersion_estimation == "raw") {
+    dds <- DESeq2::estimateDispersions(dds, fitType = "mean")
+    DESeq2::dispersions(dds) <- SummarizedExperiment::mcols(dds)$dispGeneEst
+  } else {
+    dds <- DESeq2::estimateDispersions(dds, fitType = dispersion_estimation)
+  }
+  # 3. NB GLM
   dds <- DESeq2::nbinomWaldTest(object = dds)
 
   # get mu, thetas, and Z_model
