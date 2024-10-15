@@ -53,41 +53,35 @@
 #' ###########################
 #' residual_res <- run_regress_out_covariates_test(Y_list = Y_list, x = x, Z = Z, side = "right")
 #' get_result_metrics(residual_res, under_null)
-run_robust_nb_regression <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, method = "MASS", theta = NULL, max_iterations = 200000L) {
+run_robust_nb_regression <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, method = "MASS", size_factors = NULL, theta = NULL, max_iterations = 200000L) {
   if (2/choose(length(x), sum(x)) > 5e-4) {
     warning("Your sample size may be too small for the permutation test to make any significant hits. Consider using a different method (e.g., DESeq2) or increasing your sample size.")
   }
   Z_model <- cbind(1, Z)
   colnames(Z_model) <- rownames(Z_model) <- NULL
   side_code <- get_side_code(side)
+  my_offsets <- if (!is.null(size_factors)) log(size_factors) else NULL
 
   # fit null GLMs and perform precomputation
-  if (method == "MASS") {
-    precomp_list <- lapply(X = Y_list, FUN = function(y) {
-      # try to fit the NB glm and compute the p-value; otherwise, fit Pois GLM
-      if (is.null(theta)) {
-        fit <- tryCatch({
+  precomp_list <- lapply(X = Y_list, FUN = function(y) {
+    # try to fit the NB glm and compute the p-value; otherwise, fit Pois GLM
+    if (is.null(theta)) {
+      fit <- tryCatch({
+        if (is.null(size_factors)) {
           suppressWarnings(MASS::glm.nb(y ~ Z))
-        }, error = function(e) {
-          fit <- stats::glm(y ~ Z, family = poisson())
-          fit$theta <- 10; fit
-        })
-        theta <- fit$theta
-      } else {
-        fit <- stats::glm(y ~ Z, family = MASS::negative.binomial(theta))
-      }
-      compute_precomputation_pieces_v2(y, Z_model, theta, fit)
-    })
-  } else if (method == "VGAM") {
-    precomp_list <- lapply(X = Y_list, FUN = function(y) {
-      suppressWarnings(fit <- VGAM::vglm(y ~ Z, family = VGAM::negbinomial()))
-      coefs <- stats::setNames(fit@coefficients[-2], NULL)
-      theta <- stats::setNames(exp(fit@coefficients[2]), NULL)
-      compute_precomputation_pieces(y, Z_model, coefs, theta)
-    })
-  } else {
-    stop("Method not recognized.")
-  }
+        } else {
+          suppressWarnings(MASS::glm.nb(y ~ Z + offset(my_offsets)))
+        }
+      }, error = function(e) {
+        fit <- stats::glm(y ~ Z, family = poisson(), offset = my_offsets)
+        fit$theta <- 10; fit
+      })
+      theta <- fit$theta
+    } else {
+      fit <- stats::glm(y ~ Z, family = MASS::negative.binomial(theta), offset = my_offsets)
+    }
+    compute_precomputation_pieces_v2(y, Z_model, theta, fit)
+  })
 
   result <- run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, max_iterations, "compute_score_stat")
   as.data.frame(result) |> setNames(c("p_value", "rejected", "n_losses", "stop_time"))

@@ -4,34 +4,28 @@
 #'
 #' @return a data frame containing the p-values and rejections
 #' @export
-run_standard_nb_regression <- function(Y_list, x, Z, side = "two_tailed", alpha = 0.1, method = "MASS", theta = NULL) {
+run_standard_nb_regression <- function(Y_list, x, Z, side = "two_tailed", alpha = 0.1, method = "MASS", size_factors = NULL, theta = NULL) {
   if (!(side %in% c("left", "right", "two_tailed"))) stop("`side` not recognized.")
-  if (method == "MASS") {
-    p_values <- sapply(X = Y_list, FUN = function(y) {
-      # try to fit the glm and compute the p-value; otherwise, return 1
-      p <- tryCatch({
-        if (is.null(theta)) {
+  my_offsets <- if (!is.null(size_factors)) log(size_factors) else NULL
+  p_values <- sapply(X = Y_list, FUN = function(y) {
+    # try to fit the glm and compute the p-value; otherwise, return 1
+    p <- tryCatch({
+      if (is.null(theta)) {
+        if (is.null(size_factors)) {
           suppressWarnings(fit <- MASS::glm.nb(y ~ x + Z))
         } else {
-          fit <- stats::glm(y ~ x + Z, family = MASS::negative.binomial(theta))
+          suppressWarnings(fit <- MASS::glm.nb(y ~ x + Z + offset(my_offsets)))
         }
-        fit$family <- stats::poisson()
-        s <- summary(fit)
-        z <- coef(s)["x", "z value"]
-        compute_gaussian_p_value(z, side)
-      }, error = function(e) 1)
-      return(p)
-    })
-  } else if (method == "VGAM") {
-    p_values <- sapply(X = Y_list, FUN = function(y) {
-      fit <- VGAM::vglm(y ~ x + Z, family = VGAM::negbinomial())
-      s <- VGAM::summaryvglm(fit)
-      z <- s@coef3["x", "z value"]
+      } else {
+        fit <- stats::glm(y ~ x + Z, family = MASS::negative.binomial(theta), offset = my_offsets)
+      }
+      fit$family <- stats::poisson()
+      s <- summary(fit)
+      z <- coef(s)["x", "z value"]
       compute_gaussian_p_value(z, side)
-    })
-  } else {
-    stop("Method not recognized.")
-  }
+    }, error = function(e) 1)
+    return(p)
+  })
   rejected <- stats::p.adjust(p_values, method = "BH") < alpha
   data.frame(p_value = p_values, rejected = rejected)
 }
