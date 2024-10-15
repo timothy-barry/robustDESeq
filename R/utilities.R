@@ -22,10 +22,11 @@ get_result_metrics <- function(result, under_null) {
   n_true_discoveries <- sum(!under_null[rejected])
   n_false_discoveries <- sum(under_null[rejected])
   n_discoveries <- sum(rejected)
+  n_alternatives <- sum(!under_null)
   fdp <- if (n_discoveries >= 1L) mean(under_null[rejected]) else 0
   return(list(n_true_discoveries = n_true_discoveries,
               n_false_discoveries = n_false_discoveries,
-              n_discoveries = n_discoveries, fdp = fdp))
+              n_discoveries = n_discoveries, fdp = fdp, tpr = n_true_discoveries/n_alternatives))
 }
 
 get_theta_from_fitted_glm <- function(fit) {

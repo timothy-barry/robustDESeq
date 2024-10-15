@@ -14,7 +14,7 @@
 #' highly_expressed <- row_sums >= 5
 #' dds <- dds[highly_expressed,]
 #' res <- run_robust_deseq(dds)
-run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, size_factors = NULL, size_factor_estimation = "default", dispersion_estimation = "local", max_iterations = 200000L) {
+run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, size_factors = NULL, size_factor_estimation = "default", dispersions = NULL, dispersion_estimation = "local", max_iterations = 200000L) {
   # get the side of the test
   side_code <- get_side_code(side)
 
@@ -47,12 +47,17 @@ run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, siz
     DESeq2::sizeFactors(dds) <- size_factors
   }
   # 2. dispersion
-  if (dispersion_estimation == "raw") {
-    dds <- DESeq2::estimateDispersions(dds, fitType = "mean")
-    DESeq2::dispersions(dds) <- SummarizedExperiment::mcols(dds)$dispGeneEst
+  if (is.null(dispersions)) {
+    if (dispersion_estimation == "raw") {
+      dds <- DESeq2::estimateDispersions(dds, fitType = "mean")
+      DESeq2::dispersions(dds) <- SummarizedExperiment::mcols(dds)$dispGeneEst
+    } else {
+      dds <- DESeq2::estimateDispersions(dds, fitType = dispersion_estimation)
+    }
   } else {
-    dds <- DESeq2::estimateDispersions(dds, fitType = dispersion_estimation)
+    DESeq2::dispersions(dds) <- dispersions
   }
+
   # 3. NB GLM
   dds <- DESeq2::nbinomWaldTest(object = dds)
 
@@ -103,11 +108,11 @@ run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, siz
 #' }, simplify = FALSE)
 #'
 #' res <- run_robust_deseq_list_interface(Y_list, x, Z)
-run_robust_deseq_list_interface <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, size_factors = NULL, size_factor_estimation = "default", dispersion_estimation = "local", max_iterations = 200000L) {
+run_robust_deseq_list_interface <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, size_factors = NULL, size_factor_estimation = "default", dispersions = NULL, dispersion_estimation = "local", max_iterations = 200000L) {
   dds <- make_deseq_object(Y_list, x, Z)
   out <- run_robust_deseq(dds = dds, side = side, h = h,
                           alpha = alpha, size_factors = size_factors, size_factor_estimation = size_factor_estimation,
-                          dispersion_estimation = dispersion_estimation,
+                          dispersions = dispersions, dispersion_estimation = dispersion_estimation,
                           max_iterations = max_iterations)
   return(out)
 }
@@ -115,14 +120,31 @@ run_robust_deseq_list_interface <- function(Y_list, x, Z, side = "two_tailed", h
 
 #' Run standard DESeq (list interface)
 #' @export
-run_standard_deseq_list_interface <- function(Y_list, x, Z, side = "two_tailed", alpha = 0.1, dispersion_estimation = "local", size_factors = NULL) {
+run_standard_deseq_list_interface <- function(Y_list, x, Z, side = "two_tailed", alpha = 0.1, size_factors = NULL, size_factor_estimation = "default", dispersions = NULL, dispersion_estimation = "local", max_iterations = 200000L) {
   dds <- make_deseq_object(Y_list, x, Z)
   if (is.null(size_factors)) {
-    dds <- DESeq2::estimateSizeFactors(dds)
+    if (size_factor_estimation == "default") {
+      dds <- DESeq2::estimateSizeFactors(dds)
+    } else if (size_factor_estimation == "library_size") {
+      lib_sizes <- colSums(SummarizedExperiment::assays(dds)$counts)
+      DESeq2::sizeFactors(dds) <- lib_sizes/mean(lib_sizes)
+    } else {
+      stop("`size_factor_estimation` should be `default` or `library_size`.")
+    }
   } else {
     DESeq2::sizeFactors(dds) <- size_factors
   }
-  dds <- DESeq2::estimateDispersions(dds, fitType = dispersion_estimation)
+  # 2. dispersion
+  if (is.null(dispersions)) {
+    if (dispersion_estimation == "raw") {
+      dds <- DESeq2::estimateDispersions(dds, fitType = "mean")
+      DESeq2::dispersions(dds) <- SummarizedExperiment::mcols(dds)$dispGeneEst
+    } else {
+      dds <- DESeq2::estimateDispersions(dds, fitType = dispersion_estimation)
+    }
+  } else {
+    DESeq2::dispersions(dds) <- dispersions
+  }
   dds <- DESeq2::nbinomWaldTest(dds)
   res <- DESeq2::results(dds, independentFiltering = FALSE, cooksCutoff = FALSE)
   rejected <- p.adjust(p = res$pvalue, method = "BH") < alpha
