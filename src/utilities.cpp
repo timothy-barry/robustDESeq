@@ -42,6 +42,7 @@ std::vector<std::vector<int>> generate_wor_sample_test(int n, int n_trt, int n_s
 /*
  * Test statistics
  */
+// [[Rcpp::export]]
 double compute_score_stat(List precomp, const std::vector<int>& trt_idxs, int n_trt) {
   NumericVector a = precomp(0);
   NumericVector w = precomp(1);
