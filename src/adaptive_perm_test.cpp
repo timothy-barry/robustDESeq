@@ -59,9 +59,13 @@ List run_adaptive_permutation_test(List precomp_list, IntegerVector x, int side_
       if (active_set[i]) {
         // compute the test statistic
         curr_test_stat = funct(precomp_list(i), random_samp, n_trt);
-        // determine whether we have a loss; if so, increment n_right_losses
-        n_right_losses[i] += (curr_test_stat >= original_statistics[i] ? 1.0 : 0.0);
-        n_left_losses[i] += (curr_test_stat <= original_statistics[i] ? 1.0 : 0.0);
+        if (!std::isfinite(curr_test_stat)) { // if the statistic is non-finite, be conservative
+          n_right_losses[i] ++;
+          n_left_losses[i] ++;
+        } else {
+          n_right_losses[i] += (curr_test_stat >= original_statistics[i] ? 1.0 : 0.0);
+          n_left_losses[i] += (curr_test_stat <= original_statistics[i] ? 1.0 : 0.0);
+        }
       }
     }
 
