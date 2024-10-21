@@ -35,3 +35,16 @@ get_theta_from_fitted_glm <- function(fit) {
   theta <- mean((w * mu)/(mu - w))
   return(theta)
 }
+
+
+#' @export
+make_qq_plot <- function(to_plot) {
+  p_qq_trans <- ggplot2::ggplot(data = to_plot, mapping = ggplot2::aes(y = p_value)) +
+    sceptre:::stat_qq_points(size = 0.8, ymin = 1e-8) +
+    sceptre:::stat_qq_band() +
+    ggplot2::scale_x_continuous(trans = sceptre:::revlog_trans(10)) +
+    ggplot2::scale_y_continuous(trans = sceptre:::revlog_trans(10)) +
+    ggplot2::labs(x = "Expected null p-value", y = "Observed p-value") +
+    ggplot2::geom_abline(col = "black")
+  p_qq_trans
+}

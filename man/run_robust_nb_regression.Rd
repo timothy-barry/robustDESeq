@@ -12,6 +12,7 @@ run_robust_nb_regression(
   h = 15L,
   alpha = 0.1,
   method = "MASS",
+  size_factors = NULL,
   theta = NULL,
   max_iterations = 200000L
 )
@@ -41,6 +42,7 @@ Run robust NB regression
 ############################
 # GENERATE MULTIPLE DATASETS
 ############################
+set.seed(10)
 n <- 1000L
 m <- 500L
 theta_gt <- 5

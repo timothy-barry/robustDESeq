@@ -13,6 +13,7 @@ run_robust_deseq_list_interface(
   alpha = 0.1,
   size_factors = NULL,
   size_factor_estimation = "default",
+  dispersions = NULL,
   dispersion_estimation = "local",
   max_iterations = 200000L
 )

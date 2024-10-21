@@ -10,8 +10,11 @@ run_standard_deseq_list_interface(
   Z,
   side = "two_tailed",
   alpha = 0.1,
+  size_factors = NULL,
+  size_factor_estimation = "default",
+  dispersions = NULL,
   dispersion_estimation = "local",
-  size_factors = NULL
+  max_iterations = 200000L
 )
 }
 \description{

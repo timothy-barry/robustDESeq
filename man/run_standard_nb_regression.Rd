@@ -11,6 +11,7 @@ run_standard_nb_regression(
   side = "two_tailed",
   alpha = 0.1,
   method = "MASS",
+  size_factors = NULL,
   theta = NULL
 )
 }
