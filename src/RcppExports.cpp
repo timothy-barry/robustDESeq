@@ -27,6 +27,19 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// compute_score_stat_benchmark
+NumericVector compute_score_stat_benchmark(const List& precomp, int s, const List& trt_idxs_list);
+RcppExport SEXP _robustDESeq_compute_score_stat_benchmark(SEXP precompSEXP, SEXP sSEXP, SEXP trt_idxs_listSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const List& >::type precomp(precompSEXP);
+    Rcpp::traits::input_parameter< int >::type s(sSEXP);
+    Rcpp::traits::input_parameter< const List& >::type trt_idxs_list(trt_idxs_listSEXP);
+    rcpp_result_gen = Rcpp::wrap(compute_score_stat_benchmark(precomp, s, trt_idxs_list));
+    return rcpp_result_gen;
+END_RCPP
+}
 // run_permutation_test
 std::vector<double> run_permutation_test(List precomp_list, IntegerVector x, int side_code, int B, std::string test_stat_str);
 RcppExport SEXP _robustDESeq_run_permutation_test(SEXP precomp_listSEXP, SEXP xSEXP, SEXP side_codeSEXP, SEXP BSEXP, SEXP test_stat_strSEXP) {
@@ -68,25 +81,13 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
-// compute_wald_test_statistic
-void compute_wald_test_statistic(List precomp, const std::vector<int>& x, int n_trt);
-RcppExport SEXP _robustDESeq_compute_wald_test_statistic(SEXP precompSEXP, SEXP xSEXP, SEXP n_trtSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< List >::type precomp(precompSEXP);
-    Rcpp::traits::input_parameter< const std::vector<int>& >::type x(xSEXP);
-    Rcpp::traits::input_parameter< int >::type n_trt(n_trtSEXP);
-    compute_wald_test_statistic(precomp, x, n_trt);
-    return R_NilValue;
-END_RCPP
-}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_robustDESeq_run_adaptive_permutation_test", (DL_FUNC) &_robustDESeq_run_adaptive_permutation_test, 7},
+    {"_robustDESeq_compute_score_stat_benchmark", (DL_FUNC) &_robustDESeq_compute_score_stat_benchmark, 3},
     {"_robustDESeq_run_permutation_test", (DL_FUNC) &_robustDESeq_run_permutation_test, 5},
     {"_robustDESeq_generate_wor_sample_test", (DL_FUNC) &_robustDESeq_generate_wor_sample_test, 3},
     {"_robustDESeq_compute_score_stat", (DL_FUNC) &_robustDESeq_compute_score_stat, 3},
-    {"_robustDESeq_compute_wald_test_statistic", (DL_FUNC) &_robustDESeq_compute_wald_test_statistic, 3},
     {NULL, NULL, 0}
 };
 

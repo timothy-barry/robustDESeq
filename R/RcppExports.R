@@ -5,6 +5,10 @@ run_adaptive_permutation_test <- function(precomp_list, x, side_code, h, alpha, 
     .Call(`_robustDESeq_run_adaptive_permutation_test`, precomp_list, x, side_code, h, alpha, max_iterations, test_stat_str)
 }
 
+compute_score_stat_benchmark <- function(precomp, s, trt_idxs_list) {
+    .Call(`_robustDESeq_compute_score_stat_benchmark`, precomp, s, trt_idxs_list)
+}
+
 run_permutation_test <- function(precomp_list, x, side_code, B, test_stat_str) {
     .Call(`_robustDESeq_run_permutation_test`, precomp_list, x, side_code, B, test_stat_str)
 }
@@ -15,9 +19,5 @@ generate_wor_sample_test <- function(n, n_trt, n_samples) {
 
 compute_score_stat <- function(precomp, trt_idxs, n_trt) {
     .Call(`_robustDESeq_compute_score_stat`, precomp, trt_idxs, n_trt)
-}
-
-compute_wald_test_statistic <- function(precomp, x, n_trt) {
-    invisible(.Call(`_robustDESeq_compute_wald_test_statistic`, precomp, x, n_trt))
 }
 
