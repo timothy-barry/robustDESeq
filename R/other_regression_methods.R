@@ -37,8 +37,9 @@ run_standard_nb_regression <- function(Y_list, x, Z, side = "two_tailed", alpha 
 #'
 #' @return a data frame containing the p-values and rejections
 #' @export
-run_regress_out_covariates_test <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, resid_type = c("response", "deviance", "pearson")[1], theta = NULL, max_iterations = 50000L) {
-  if (!(resid_type %in% c("response", "deviance", "pearson"))) stop("Residual type not recognized.")
+run_regress_out_covariates_test <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, resid_type = c("response", "deviance", "pearson", "all")[1], theta = NULL, max_iterations = 50000L) {
+  resid_types <- c("response", "deviance", "pearson")
+  if (!(resid_type %in% c(resid_types, "all"))) stop("Residual type not recognized.")
   side_code <- get_side_code(side)
   # fit null GLMs and perform precomputation
   precomp_list <- lapply(X = Y_list, FUN = function(y) {
@@ -51,11 +52,27 @@ run_regress_out_covariates_test <- function(Y_list, x, Z, side = "two_tailed", h
     } else {
       fit <- stats::glm(y ~ Z, family = MASS::negative.binomial(theta))
     }
-    r <- stats::setNames(stats::resid(fit, type = resid_type), NULL)
-    list(r)
+    if (resid_type != "all") {
+      list(stats::setNames(stats::resid(fit, type = resid_type), NULL))
+    } else {
+      lapply(resid_types, function(curr_resid_type) {
+        stats::resid(fit, type = curr_resid_type)
+      }) |> stats::setNames(resid_types)
+    }
   })
-  result <- run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, max_iterations, "compute_mean_over_treated_units")
-  as.data.frame(result) |> setNames(c("p_value", "rejected", "n_losses", "stop_time"))
+  if (resid_type == "all") {
+    out <- lapply(X = resid_types, FUN = function(curr_resid_type) {
+      curr_precomp_list <- lapply(precomp_list, FUN = function(item) item[curr_resid_type])
+      curr_result <- run_adaptive_permutation_test(curr_precomp_list, x, side_code, h,
+                                                   alpha, max_iterations, "compute_mean_over_treated_units") |>
+        as.data.frame() |> setNames(c("p_value", "rejected", "n_losses", "stop_time")) |> dplyr::mutate(resid_type = curr_resid_type)
+
+    }) |> data.table::rbindlist() |> as.data.frame()
+  } else {
+    out <- run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, max_iterations, "compute_mean_over_treated_units") |>
+      as.data.frame() |> setNames(c("p_value", "rejected", "n_losses", "stop_time"))
+  }
+  return(out)
 }
 
 
