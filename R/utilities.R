@@ -48,3 +48,12 @@ make_qq_plot <- function(to_plot) {
     ggplot2::geom_abline(col = "black")
   p_qq_trans
 }
+
+generic_evaluation_function <- function(output, metric) {
+  resid_types <- c("response", "deviance", "pearson")
+  if (all(names(output) %in% resid_types)) {
+    sapply(resid_types, function(resid_type) output[[resid_type]][[metric]])
+  } else {
+    output[[metric]]
+  }
+}
