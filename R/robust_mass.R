@@ -81,7 +81,7 @@ run_robust_nb_regression <- function(Y_list, x, Z, side = "two_tailed", h = 15L,
     } else {
       fit <- stats::glm(y ~ Z, family = MASS::negative.binomial(theta), offset = my_offsets)
     }
-    compute_precomputation_pieces_v2(y, Z_model, theta, fit)
+    compute_precomputation_pieces_mass(y, Z_model, theta, fit)
   })
 
   result <- run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, max_iterations, "compute_score_stat")
@@ -89,24 +89,7 @@ run_robust_nb_regression <- function(Y_list, x, Z, side = "two_tailed", h = 15L,
 }
 
 
-compute_precomputation_pieces <- function(y, Z_model, coefs, theta) {
-  mu <- as.numeric(exp(Z_model %*% coefs))
-  denom <- 1 + mu / theta
-  w <- mu / denom
-  a <- (y - mu) / denom
-  wZ <- w * Z_model
-  Zt_wZ <- t(Z_model) %*% wZ
-  P_decomp <- eigen(Zt_wZ, symmetric = TRUE)
-  U <- P_decomp$vectors
-  Lambda_minus_half <- 1 / sqrt(P_decomp$values)
-  D <- (Lambda_minus_half * t(U)) %*% t(wZ)
-  D_list <- apply(D, 1L, function(row) row, simplify = FALSE)
-  out <- list(a = a, w = w, D_list = D_list)
-  return(out)
-}
-
-
-compute_precomputation_pieces_v2 <- function(y, Z_model, theta, fit) {
+compute_precomputation_pieces_mass <- function(y, Z_model, theta, fit) {
   mu <- stats::setNames(fit$fitted.values, NULL)
   w <- stats::setNames(fit$weights, NULL)
   qr <- fit$qr
