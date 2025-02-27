@@ -75,3 +75,20 @@ compute_precomputation_pieces_vgam <- function(y, Z_model, theta, mu, w, R) {
   out <- list(a = a, w = w, D_list = D_list)
   return(out)
 }
+
+#' @export
+run_robust_poisson <- function(y_list, x, Z_list, theta = 1000, side = "two_tailed", h = 15L, alpha = 0.1, max_iterations = 200000L) {
+  side_code <- get_side_code(side)
+  precomp_list <- lapply(X = seq_along(y_list), FUN = function(i) {
+    y <- y_list[[i]]
+    Z <- Z_list[[i]]
+    Z_model <- cbind(1, Z)
+    colnames(Z_model) <- rownames(Z_model) <- NULL
+    # fit the GLM to esetimate thet
+    suppressWarnings(fit <- glm(y ~ Z, family = poisson()))
+    # compute the precomputation pieces
+    compute_precomputation_pieces_mass(y, Z_model, theta, fit)
+  })
+  result <- run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, max_iterations, "compute_score_stat")
+  as.data.frame(result) |> setNames(c("p_value", "rejected", "n_losses", "stop_time"))
+}

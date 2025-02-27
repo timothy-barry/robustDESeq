@@ -37,20 +37,21 @@ run_standard_nb_regression <- function(Y_list, x, Z, side = "two_tailed", alpha 
 #'
 #' @return a data frame containing the p-values and rejections
 #' @export
-run_regress_out_covariates_test <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, resid_type = c("response", "deviance", "pearson", "all")[1], theta = NULL, max_iterations = 50000L) {
+run_regress_out_covariates_test <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, resid_type = c("response", "deviance", "pearson", "all")[1], theta = NULL, max_iterations = 50000L, size_factors = NULL) {
   resid_types <- c("response", "deviance", "pearson")
+  my_offsets <- if (!is.null(size_factors)) log(size_factors) else NULL
   if (!(resid_type %in% c(resid_types, "all"))) stop("Residual type not recognized.")
   side_code <- get_side_code(side)
   # fit null GLMs and perform precomputation
   precomp_list <- lapply(X = Y_list, FUN = function(y) {
     if (is.null(theta)) {
       fit <- tryCatch({
-        suppressWarnings(MASS::glm.nb(y ~ Z))
+        suppressWarnings(MASS::glm.nb(y ~ Z + offset(my_offsets)))
       }, error = function(e) {
         stats::glm(y ~ Z, family = poisson())
       })
     } else {
-      fit <- stats::glm(y ~ Z, family = MASS::negative.binomial(theta))
+      fit <- stats::glm(y ~ Z + offset(my_offsets), family = MASS::negative.binomial(theta))
     }
     if (resid_type != "all") {
       list(stats::setNames(stats::resid(fit, type = resid_type), NULL))
