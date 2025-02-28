@@ -41,7 +41,7 @@ BEGIN_RCPP
 END_RCPP
 }
 // run_permutation_test
-std::vector<double> run_permutation_test(List precomp_list, IntegerVector x, int side_code, int B, std::string test_stat_str);
+List run_permutation_test(List precomp_list, IntegerVector x, int side_code, int B, std::string test_stat_str);
 RcppExport SEXP _robustDESeq_run_permutation_test(SEXP precomp_listSEXP, SEXP xSEXP, SEXP side_codeSEXP, SEXP BSEXP, SEXP test_stat_strSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
