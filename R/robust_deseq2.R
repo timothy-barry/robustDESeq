@@ -14,7 +14,7 @@
 #' highly_expressed <- row_sums >= 5
 #' dds <- dds[highly_expressed,]
 #' res <- run_robust_deseq(dds)
-run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, size_factors = NULL, size_factor_estimation = "default", dispersions = NULL, dispersion_estimation = "local", max_iterations = 200000L) {
+run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, size_factors = NULL, size_factor_estimation = "default", dispersions = NULL, dispersion_estimation = "local", max_iterations = 200000L, custom_permutation_list = list()) {
   # get the side of the test
   side_code <- get_side_code(side)
 
@@ -78,7 +78,7 @@ run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, siz
 
   # run the permutation test
   print("Running permutations.")
-  result <- run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, max_iterations, "compute_score_stat")
+  result <- run_adaptive_permutation_test_v2(precomp_list, x, side_code, h, alpha, max_iterations, "compute_score_stat", custom_permutation_list)
   as.data.frame(result) |> setNames(c("p_value", "rejected", "n_losses", "stop_time"))
 }
 
@@ -108,19 +108,19 @@ run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, siz
 #' }, simplify = FALSE)
 #'
 #' res <- run_robust_deseq_list_interface(Y_list, x, Z)
-run_robust_deseq_list_interface <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, size_factors = NULL, size_factor_estimation = "default", dispersions = NULL, dispersion_estimation = "local", max_iterations = 200000L) {
+run_robust_deseq_list_interface <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, size_factors = NULL, size_factor_estimation = "default", dispersions = NULL, dispersion_estimation = "local", max_iterations = 200000L, custom_permutation_list = list()) {
   dds <- make_deseq_object(Y_list, x, Z)
   out <- run_robust_deseq(dds = dds, side = side, h = h,
                           alpha = alpha, size_factors = size_factors, size_factor_estimation = size_factor_estimation,
                           dispersions = dispersions, dispersion_estimation = dispersion_estimation,
-                          max_iterations = max_iterations)
+                          max_iterations = max_iterations, custom_permutation_list = custom_permutation_list)
   return(out)
 }
 
 
 #' Run standard DESeq (list interface)
 #' @export
-run_standard_deseq_list_interface <- function(Y_list, x, Z, side = "two_tailed", alpha = 0.1, size_factors = NULL, size_factor_estimation = "default", dispersions = NULL, dispersion_estimation = "local", max_iterations = 200000L) {
+run_standard_deseq_list_interface <- function(Y_list, x, Z, side = "two_tailed", alpha = 0.1, size_factors = NULL, size_factor_estimation = "default", dispersions = NULL, dispersion_estimation = "local") {
   dds <- make_deseq_object(Y_list, x, Z)
   if (is.null(size_factors)) {
     if (size_factor_estimation == "default") {

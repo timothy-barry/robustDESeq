@@ -21,7 +21,6 @@ void draw_wor_sample(boost::random::mt19937& generator,
   return;
 }
 
-
 // [[Rcpp::export]]
 std::vector<std::vector<int>> generate_wor_sample_test(int n, int n_trt, int n_samples) {
   std::vector<std::vector<int>> out(n_samples);

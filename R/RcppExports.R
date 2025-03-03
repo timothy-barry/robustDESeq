@@ -5,6 +5,10 @@ run_adaptive_permutation_test <- function(precomp_list, x, side_code, h, alpha, 
     .Call(`_robustDESeq_run_adaptive_permutation_test`, precomp_list, x, side_code, h, alpha, max_iterations, test_stat_str)
 }
 
+run_adaptive_permutation_test_v2 <- function(precomp_list, x, side_code, h, alpha, max_iterations, test_stat_str, custom_permutation_list) {
+    .Call(`_robustDESeq_run_adaptive_permutation_test_v2`, precomp_list, x, side_code, h, alpha, max_iterations, test_stat_str, custom_permutation_list)
+}
+
 compute_score_stat_benchmark <- function(precomp, s, trt_idxs_list) {
     .Call(`_robustDESeq_compute_score_stat_benchmark`, precomp, s, trt_idxs_list)
 }

@@ -43,7 +43,7 @@
 #' # standard VGAM
 #' robust_res <- run_robust_vgam(y_list, x, Z_list)
 #' get_result_metrics(robust_res, under_null)
-run_robust_vgam <- function(y_list, x, Z_list, side = "two_tailed", h = 15L, alpha = 0.1, max_iterations = 200000L) { # Z does not contain an intercept
+run_robust_vgam <- function(y_list, x, Z_list, side = "two_tailed", h = 15L, alpha = 0.1, max_iterations = 200000L, custom_permutation_list = list()) { # Z does not contain an intercept
   side_code <- get_side_code(side)
   precomp_list <- lapply(X = seq_along(y_list), FUN = function(i) {
     y <- y_list[[i]]
@@ -61,7 +61,7 @@ run_robust_vgam <- function(y_list, x, Z_list, side = "two_tailed", h = 15L, alp
     w <- mu/(1 + mu/theta)
     compute_precomputation_pieces_vgam(y, Z_model, theta, mu, w, R)
   })
-  result <- run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, max_iterations, "compute_score_stat")
+  result <- run_adaptive_permutation_test_v2(precomp_list, x, side_code, h, alpha, max_iterations, "compute_score_stat", custom_permutation_list)
   as.data.frame(result) |> setNames(c("p_value", "rejected", "n_losses", "stop_time"))
 }
 
@@ -77,7 +77,7 @@ compute_precomputation_pieces_vgam <- function(y, Z_model, theta, mu, w, R) {
 }
 
 #' @export
-run_robust_poisson <- function(y_list, x, Z_list, theta = 1000, side = "two_tailed", h = 15L, alpha = 0.1, max_iterations = 200000L) {
+run_robust_poisson <- function(y_list, x, Z_list, theta = 1000, side = "two_tailed", h = 15L, alpha = 0.1, max_iterations = 200000L, custom_permutation_list = list()) {
   side_code <- get_side_code(side)
   precomp_list <- lapply(X = seq_along(y_list), FUN = function(i) {
     y <- y_list[[i]]
@@ -89,6 +89,6 @@ run_robust_poisson <- function(y_list, x, Z_list, theta = 1000, side = "two_tail
     # compute the precomputation pieces
     compute_precomputation_pieces_mass(y, Z_model, theta, fit)
   })
-  result <- run_adaptive_permutation_test(precomp_list, x, side_code, h, alpha, max_iterations, "compute_score_stat")
+  result <- run_adaptive_permutation_test_v2(precomp_list, x, side_code, h, alpha, max_iterations, "compute_score_stat", custom_permutation_list)
   as.data.frame(result) |> setNames(c("p_value", "rejected", "n_losses", "stop_time"))
 }

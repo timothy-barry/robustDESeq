@@ -27,6 +27,24 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// run_adaptive_permutation_test_v2
+List run_adaptive_permutation_test_v2(List precomp_list, IntegerVector x, int side_code, int h, double alpha, int max_iterations, std::string test_stat_str, List custom_permutation_list);
+RcppExport SEXP _robustDESeq_run_adaptive_permutation_test_v2(SEXP precomp_listSEXP, SEXP xSEXP, SEXP side_codeSEXP, SEXP hSEXP, SEXP alphaSEXP, SEXP max_iterationsSEXP, SEXP test_stat_strSEXP, SEXP custom_permutation_listSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< List >::type precomp_list(precomp_listSEXP);
+    Rcpp::traits::input_parameter< IntegerVector >::type x(xSEXP);
+    Rcpp::traits::input_parameter< int >::type side_code(side_codeSEXP);
+    Rcpp::traits::input_parameter< int >::type h(hSEXP);
+    Rcpp::traits::input_parameter< double >::type alpha(alphaSEXP);
+    Rcpp::traits::input_parameter< int >::type max_iterations(max_iterationsSEXP);
+    Rcpp::traits::input_parameter< std::string >::type test_stat_str(test_stat_strSEXP);
+    Rcpp::traits::input_parameter< List >::type custom_permutation_list(custom_permutation_listSEXP);
+    rcpp_result_gen = Rcpp::wrap(run_adaptive_permutation_test_v2(precomp_list, x, side_code, h, alpha, max_iterations, test_stat_str, custom_permutation_list));
+    return rcpp_result_gen;
+END_RCPP
+}
 // compute_score_stat_benchmark
 NumericVector compute_score_stat_benchmark(const List& precomp, int s, const List& trt_idxs_list);
 RcppExport SEXP _robustDESeq_compute_score_stat_benchmark(SEXP precompSEXP, SEXP sSEXP, SEXP trt_idxs_listSEXP) {
@@ -84,6 +102,7 @@ END_RCPP
 
 static const R_CallMethodDef CallEntries[] = {
     {"_robustDESeq_run_adaptive_permutation_test", (DL_FUNC) &_robustDESeq_run_adaptive_permutation_test, 7},
+    {"_robustDESeq_run_adaptive_permutation_test_v2", (DL_FUNC) &_robustDESeq_run_adaptive_permutation_test_v2, 8},
     {"_robustDESeq_compute_score_stat_benchmark", (DL_FUNC) &_robustDESeq_compute_score_stat_benchmark, 3},
     {"_robustDESeq_run_permutation_test", (DL_FUNC) &_robustDESeq_run_permutation_test, 5},
     {"_robustDESeq_generate_wor_sample_test", (DL_FUNC) &_robustDESeq_generate_wor_sample_test, 3},
