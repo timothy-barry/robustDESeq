@@ -13,7 +13,8 @@ run_mann_whitney_test_permutations(
   B = NULL,
   alpha = 0.1,
   adaptive_permutation_test = TRUE,
-  max_iterations = 50000L
+  max_iterations = 50000L,
+  custom_permutation_list = list()
 )
 }
 \arguments{

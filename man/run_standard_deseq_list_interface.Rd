@@ -13,8 +13,7 @@ run_standard_deseq_list_interface(
   size_factors = NULL,
   size_factor_estimation = "default",
   dispersions = NULL,
-  dispersion_estimation = "local",
-  max_iterations = 200000L
+  dispersion_estimation = "local"
 )
 }
 \description{

@@ -37,7 +37,7 @@ run_standard_nb_regression <- function(Y_list, x, Z, side = "two_tailed", alpha 
 #'
 #' @return a data frame containing the p-values and rejections
 #' @export
-run_regress_out_covariates_test <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, resid_type = c("response", "deviance", "pearson", "all")[1], theta = NULL, max_iterations = 50000L, size_factors = NULL, adaptive = TRUE, custom_permutation_list = list()) {
+run_regress_out_covariates_test <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, resid_type = c("response", "deviance", "pearson", "all")[1], theta = NULL, B = NULL, max_iterations = 50000L, size_factors = NULL, adaptive = TRUE, custom_permutation_list = list()) {
   resid_types <- c("response", "deviance", "pearson")
   my_offsets <- if (!is.null(size_factors)) log(size_factors) else NULL
   if (!(resid_type %in% c(resid_types, "all"))) stop("Residual type not recognized.")
@@ -74,7 +74,9 @@ run_regress_out_covariates_test <- function(Y_list, x, Z, side = "two_tailed", h
       out <- run_adaptive_permutation_test_v2(precomp_list, x, side_code, h, alpha, max_iterations, "compute_mean_over_treated_units", custom_permutation_list) |>
         as.data.frame() |> setNames(c("p_value", "rejected", "n_losses", "stop_time"))
     } else {
-      out <- run_permutation_test(precomp_list, x, side_code, 10000, "compute_mean_over_treated_units")
+      if (is.null(B)) B <- round(10 * length(Y_list)/alpha)
+      p_values <- run_permutation_test(precomp_list, x, side_code, B, "compute_mean_over_treated_units", custom_permutation_list)
+      out <- get_rejection_df(p_values, alpha)
     }
   }
   return(out)

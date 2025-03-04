@@ -57,3 +57,8 @@ generic_evaluation_function <- function(output, metric) {
     output[[metric]]
   }
 }
+
+get_rejection_df <- function(p_values, alpha) {
+  rejected <- stats::p.adjust(p_values, method = "BH") < alpha
+  data.frame(p_value = p_values, rejected = rejected)
+}
