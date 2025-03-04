@@ -65,7 +65,7 @@ run_mann_whitney_test_permutations <- function(Y_list, x, Z, side = "two_tailed"
     out <- as.data.frame(result) |> setNames(c("p_value", "rejected", "n_losses", "stop_time"))
   } else {
     if (is.null(B)) B <- round(10 * length(Y_list)/alpha)
-    p_values <- run_permutation_test(precomp_list, x, side_code, B, "compute_mw_test_statistic")
+    p_values <- run_permutation_test(precomp_list, x, side_code, B, "compute_mw_test_statistic", custom_permutation_list)
     rejected <- stats::p.adjust(p_values, method = "BH") < alpha
     out <- data.frame(p_value = p_values, rejected = rejected)
   }

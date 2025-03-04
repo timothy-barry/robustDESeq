@@ -7,14 +7,12 @@
 using namespace Rcpp;
 
 
-// [[Rcpp::export]]
-List run_permutation_test(List precomp_list, IntegerVector x, int side_code, int B, std::string test_stat_str) {
+std::vector<double> run_standard_permutation_test(List precomp_list, IntegerVector x, int side_code, int B, std::string test_stat_str) {
   // define variables and objects
   int n = x.length(), m = precomp_list.length(), n_trt;
   std::vector<double> original_statistics(m), p_values(m), n_right_losses(m, 0), n_left_losses(m, 0);
   std::vector<int> trt_idxs;
   double curr_test_stat, B_doub = static_cast<double>(B);
-  std::vector<std::vector<double>> null_statistics(m, std::vector<double>(B, 0.0));
 
   // select the test statistic
   double (*funct)(List, const std::vector<int>&, int) = nullptr;
@@ -55,7 +53,6 @@ List run_permutation_test(List precomp_list, IntegerVector x, int side_code, int
     for (int i = 0; i < m; i ++) {
       // compute the test statistic
       curr_test_stat = funct(precomp_list(i), random_samp, n_trt);
-      null_statistics[i][k] = curr_test_stat;
       // determine whether we have a loss; if so, increment n_right_losses or n_left_losses
       n_right_losses[i] += (curr_test_stat >= original_statistics[i] ? 1.0 : 0.0);
       n_left_losses[i] += (curr_test_stat <= original_statistics[i] ? 1.0 : 0.0);
@@ -71,14 +68,11 @@ List run_permutation_test(List precomp_list, IntegerVector x, int side_code, int
     for (int i = 0; i < m; i ++) p_values[i] = 2.0 * std::min((1.0 + n_right_losses[i])/(1.0 + B_doub), (1.0 + n_left_losses[i])/(1.0 + B_doub));
   }
 
-  return List::create(Named("p_values") = p_values,
-                      Named("original_statistics") = original_statistics,
-                      Named("null_statistics") = null_statistics);
+  return p_values;
 }
 
 
-// [[Rcpp::export]]
-std::vector<double> run_permutation_test_custom_permutations(List precomp_list, IntegerVector x, int side_code, std::string test_stat_str, List custom_permutation_list) {
+std::vector<double> run_custom_permutation_test(List precomp_list, IntegerVector x, int side_code, std::string test_stat_str, List custom_permutation_list) {
   // define variables and objects
   int m = precomp_list.length(), B = custom_permutation_list.size(), n_trt;
   std::vector<double> original_statistics(m), p_values(m), n_right_losses(m, 0), n_left_losses(m, 0);
@@ -136,4 +130,16 @@ std::vector<double> run_permutation_test_custom_permutations(List precomp_list, 
   }
 
   return p_values;
+}
+
+
+// [[Rcpp::export]]
+std::vector<double> run_permutation_test(List precomp_list, IntegerVector x, int side_code, int B, std::string test_stat_str, List custom_permutation_list) {
+  std::vector<double> out;
+  if (custom_permutation_list.size() >= 1) {
+    out = run_custom_permutation_test(precomp_list, x, side_code, test_stat_str, custom_permutation_list);
+  } else {
+    out = run_standard_permutation_test(precomp_list, x, side_code, B, test_stat_str);
+  }
+  return out;
 }

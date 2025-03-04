@@ -42,8 +42,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // run_permutation_test
-List run_permutation_test(List precomp_list, IntegerVector x, int side_code, int B, std::string test_stat_str);
-RcppExport SEXP _robustDESeq_run_permutation_test(SEXP precomp_listSEXP, SEXP xSEXP, SEXP side_codeSEXP, SEXP BSEXP, SEXP test_stat_strSEXP) {
+std::vector<double> run_permutation_test(List precomp_list, IntegerVector x, int side_code, int B, std::string test_stat_str, List custom_permutation_list);
+RcppExport SEXP _robustDESeq_run_permutation_test(SEXP precomp_listSEXP, SEXP xSEXP, SEXP side_codeSEXP, SEXP BSEXP, SEXP test_stat_strSEXP, SEXP custom_permutation_listSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -52,22 +52,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< int >::type side_code(side_codeSEXP);
     Rcpp::traits::input_parameter< int >::type B(BSEXP);
     Rcpp::traits::input_parameter< std::string >::type test_stat_str(test_stat_strSEXP);
-    rcpp_result_gen = Rcpp::wrap(run_permutation_test(precomp_list, x, side_code, B, test_stat_str));
-    return rcpp_result_gen;
-END_RCPP
-}
-// run_permutation_test_custom_permutations
-std::vector<double> run_permutation_test_custom_permutations(List precomp_list, IntegerVector x, int side_code, std::string test_stat_str, List custom_permutation_list);
-RcppExport SEXP _robustDESeq_run_permutation_test_custom_permutations(SEXP precomp_listSEXP, SEXP xSEXP, SEXP side_codeSEXP, SEXP test_stat_strSEXP, SEXP custom_permutation_listSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< List >::type precomp_list(precomp_listSEXP);
-    Rcpp::traits::input_parameter< IntegerVector >::type x(xSEXP);
-    Rcpp::traits::input_parameter< int >::type side_code(side_codeSEXP);
-    Rcpp::traits::input_parameter< std::string >::type test_stat_str(test_stat_strSEXP);
     Rcpp::traits::input_parameter< List >::type custom_permutation_list(custom_permutation_listSEXP);
-    rcpp_result_gen = Rcpp::wrap(run_permutation_test_custom_permutations(precomp_list, x, side_code, test_stat_str, custom_permutation_list));
+    rcpp_result_gen = Rcpp::wrap(run_permutation_test(precomp_list, x, side_code, B, test_stat_str, custom_permutation_list));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -101,8 +87,7 @@ END_RCPP
 static const R_CallMethodDef CallEntries[] = {
     {"_robustDESeq_run_adaptive_permutation_test_v2", (DL_FUNC) &_robustDESeq_run_adaptive_permutation_test_v2, 8},
     {"_robustDESeq_compute_score_stat_benchmark", (DL_FUNC) &_robustDESeq_compute_score_stat_benchmark, 3},
-    {"_robustDESeq_run_permutation_test", (DL_FUNC) &_robustDESeq_run_permutation_test, 5},
-    {"_robustDESeq_run_permutation_test_custom_permutations", (DL_FUNC) &_robustDESeq_run_permutation_test_custom_permutations, 5},
+    {"_robustDESeq_run_permutation_test", (DL_FUNC) &_robustDESeq_run_permutation_test, 6},
     {"_robustDESeq_generate_wor_sample_test", (DL_FUNC) &_robustDESeq_generate_wor_sample_test, 3},
     {"_robustDESeq_compute_score_stat", (DL_FUNC) &_robustDESeq_compute_score_stat, 3},
     {NULL, NULL, 0}

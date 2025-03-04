@@ -9,12 +9,8 @@ compute_score_stat_benchmark <- function(precomp, s, trt_idxs_list) {
     .Call(`_robustDESeq_compute_score_stat_benchmark`, precomp, s, trt_idxs_list)
 }
 
-run_permutation_test <- function(precomp_list, x, side_code, B, test_stat_str) {
-    .Call(`_robustDESeq_run_permutation_test`, precomp_list, x, side_code, B, test_stat_str)
-}
-
-run_permutation_test_custom_permutations <- function(precomp_list, x, side_code, test_stat_str, custom_permutation_list) {
-    .Call(`_robustDESeq_run_permutation_test_custom_permutations`, precomp_list, x, side_code, test_stat_str, custom_permutation_list)
+run_permutation_test <- function(precomp_list, x, side_code, B, test_stat_str, custom_permutation_list) {
+    .Call(`_robustDESeq_run_permutation_test`, precomp_list, x, side_code, B, test_stat_str, custom_permutation_list)
 }
 
 generate_wor_sample_test <- function(n, n_trt, n_samples) {
