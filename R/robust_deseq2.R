@@ -14,7 +14,7 @@
 #' highly_expressed <- row_sums >= 5
 #' dds <- dds[highly_expressed,]
 #' res <- run_robust_deseq(dds)
-run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, size_factors = NULL, size_factor_estimation = "default", dispersions = NULL, dispersion_estimation = "local", max_iterations = 200000L, custom_permutation_list = list()) {
+run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, size_factors = NULL, size_factor_estimation = "default", dispersions = NULL, dispersion_estimation = "local", max_iterations = 200000L, custom_permutation_list = list(), precomp_list = NULL, return_precomp = FALSE) {
   # get the side of the test
   side_code <- get_side_code(side)
 
@@ -32,54 +32,57 @@ run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, siz
   count_matrix <- SummarizedExperiment::assays(dds)$counts
   rownames(count_matrix) <- colnames(count_matrix) <- NULL
 
-  # run deseq
-  # 1. size factors
-  if (is.null(size_factors)) {
-    if (size_factor_estimation == "default") {
-      dds <- DESeq2::estimateSizeFactors(dds)
-    } else if (size_factor_estimation == "library_size") {
-      lib_sizes <- colSums(SummarizedExperiment::assays(dds)$counts)
-      DESeq2::sizeFactors(dds) <- lib_sizes/mean(lib_sizes)
+  if (is.null(precomp_list)) {
+    # run deseq
+    # 1. size factors
+    if (is.null(size_factors)) {
+      if (size_factor_estimation == "default") {
+        dds <- DESeq2::estimateSizeFactors(dds)
+      } else if (size_factor_estimation == "library_size") {
+        lib_sizes <- colSums(SummarizedExperiment::assays(dds)$counts)
+        DESeq2::sizeFactors(dds) <- lib_sizes/mean(lib_sizes)
+      } else {
+        stop("`size_factor_estimation` should be `default` or `library_size`.")
+      }
     } else {
-      stop("`size_factor_estimation` should be `default` or `library_size`.")
+      DESeq2::sizeFactors(dds) <- size_factors
     }
-  } else {
-    DESeq2::sizeFactors(dds) <- size_factors
-  }
-  # 2. dispersion
-  if (is.null(dispersions)) {
-    if (dispersion_estimation == "raw") {
-      dds <- DESeq2::estimateDispersions(dds, fitType = "mean")
-      DESeq2::dispersions(dds) <- SummarizedExperiment::mcols(dds)$dispGeneEst
+    # 2. dispersion
+    if (is.null(dispersions)) {
+      if (dispersion_estimation == "raw") {
+        dds <- DESeq2::estimateDispersions(dds, fitType = "mean")
+        DESeq2::dispersions(dds) <- SummarizedExperiment::mcols(dds)$dispGeneEst
+      } else {
+        dds <- DESeq2::estimateDispersions(dds, fitType = dispersion_estimation)
+      }
     } else {
-      dds <- DESeq2::estimateDispersions(dds, fitType = dispersion_estimation)
+      DESeq2::dispersions(dds) <- dispersions
     }
-  } else {
-    DESeq2::dispersions(dds) <- dispersions
+
+    # 3. NB GLM
+    dds <- DESeq2::nbinomWaldTest(object = dds)
+
+    # get mu, thetas, and Z_model
+    thetas <- 1/DESeq2::dispersions(dds)
+    Z_model <- stats::model.matrix(DESeq2::design(dds), SummarizedExperiment::colData(dds))
+    mu_mat <- SummarizedExperiment::assays(dds)$mu
+
+    # perform the precomputation
+    precomp_list <- lapply(X = seq_len(nrow(count_matrix)), FUN = function(i) {
+      compute_precomputation_pieces_deseq(count_matrix[i,], mu_mat[i,], Z_model, thetas[i])
+    })
   }
 
-  # 3. NB GLM
-  dds <- DESeq2::nbinomWaldTest(object = dds)
+  if (return_precomp) {
+    out <- precomp_list
+  } else {
+    # run the permutation test
+    print("Running permutations.")
+    result <- run_adaptive_permutation_test_v2(precomp_list, x, side_code, h, alpha, max_iterations, "compute_score_stat", custom_permutation_list)
+    out <- as.data.frame(result) |> setNames(c("p_value", "rejected", "n_losses", "stop_time"))
+  }
 
-  # get mu, thetas, and Z_model
-  thetas <- 1/DESeq2::dispersions(dds)
-  Z_model <- stats::model.matrix(DESeq2::design(dds), SummarizedExperiment::colData(dds))
-  mu_mat <- SummarizedExperiment::assays(dds)$mu
-
-  # alternately, manually compute mu_mat
-  # beta_mat <- coef(dds) * log(2)
-  # size_factors <- sizeFactors(dds)
-  # mu_mat_manual <- t(exp(Z_model %*% t(beta_mat) + log(size_factors)))
-
-  # perform the precomputation
-  precomp_list <- lapply(X = seq_len(nrow(count_matrix)), FUN = function(i) {
-    compute_precomputation_pieces_deseq(count_matrix[i,], mu_mat[i,], Z_model, thetas[i])
-  })
-
-  # run the permutation test
-  print("Running permutations.")
-  result <- run_adaptive_permutation_test_v2(precomp_list, x, side_code, h, alpha, max_iterations, "compute_score_stat", custom_permutation_list)
-  as.data.frame(result) |> setNames(c("p_value", "rejected", "n_losses", "stop_time"))
+  return(out)
 }
 
 
@@ -108,12 +111,13 @@ run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, siz
 #' }, simplify = FALSE)
 #'
 #' res <- run_robust_deseq_list_interface(Y_list, x, Z)
-run_robust_deseq_list_interface <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, size_factors = NULL, size_factor_estimation = "default", dispersions = NULL, dispersion_estimation = "local", max_iterations = 200000L, custom_permutation_list = list()) {
+run_robust_deseq_list_interface <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, size_factors = NULL, size_factor_estimation = "default", dispersions = NULL, dispersion_estimation = "local", max_iterations = 200000L, custom_permutation_list = list(), precomp_list = NULL, return_precomp = FALSE) {
   dds <- make_deseq_object(Y_list, x, Z)
   out <- run_robust_deseq(dds = dds, side = side, h = h,
                           alpha = alpha, size_factors = size_factors, size_factor_estimation = size_factor_estimation,
                           dispersions = dispersions, dispersion_estimation = dispersion_estimation,
-                          max_iterations = max_iterations, custom_permutation_list = custom_permutation_list)
+                          max_iterations = max_iterations, custom_permutation_list = custom_permutation_list,
+                          precomp_list = precomp_list, return_precomp = return_precomp)
   return(out)
 }
 
