@@ -82,7 +82,7 @@ run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, B =
     result <- run_adaptive_permutation_test_v2(precomp_list, x, side_code, h, alpha, max_iterations, "compute_score_stat", custom_permutation_list)
     out <- as.data.frame(result) |> setNames(c("p_value", "rejected", "n_losses", "stop_time"))
   } else {
-    if (is.null(B)) B <- round(10 * length(Y_list)/alpha)
+    if (is.null(B)) B <- round(10 * nrow(dds)/alpha)
     p_values <- run_permutation_test(precomp_list, x, side_code, B, test_stat_str = "compute_score_stat", custom_permutation_list)
     out <- get_rejection_df(p_values, alpha)
   }

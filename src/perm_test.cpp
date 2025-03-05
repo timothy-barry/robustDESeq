@@ -65,7 +65,7 @@ std::vector<double> run_standard_permutation_test(List precomp_list, IntegerVect
   } else if (side_code == -1) {
     for (int i = 0; i < m; i ++) p_values[i] = (1.0 + B_doub - n_right_losses[i])/(1.0 + B_doub);
   } else {
-    for (int i = 0; i < m; i ++) p_values[i] = 2.0 * std::min((1.0 + n_right_losses[i])/(1.0 + B_doub), (1.0 + n_left_losses[i])/(1.0 + B_doub));
+    for (int i = 0; i < m; i ++) p_values[i] = std::min(1.0, 2.0 * std::min((1.0 + n_right_losses[i])/(1.0 + B_doub), (1.0 + n_left_losses[i])/(1.0 + B_doub)));
   }
 
   return p_values;
@@ -126,7 +126,7 @@ std::vector<double> run_custom_permutation_test(List precomp_list, IntegerVector
   } else if (side_code == -1) {
     for (int i = 0; i < m; i ++) p_values[i] = (1.0 + B_doub - n_right_losses[i])/(1.0 + B_doub);
   } else {
-    for (int i = 0; i < m; i ++) p_values[i] = 2.0 * std::min((1.0 + n_right_losses[i])/(1.0 + B_doub), (1.0 + n_left_losses[i])/(1.0 + B_doub));
+    for (int i = 0; i < m; i ++) p_values[i] = std::min(1.0, 2.0 * std::min((1.0 + n_right_losses[i])/(1.0 + B_doub), (1.0 + n_left_losses[i])/(1.0 + B_doub)));
   }
 
   return p_values;
