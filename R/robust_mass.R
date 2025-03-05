@@ -58,12 +58,12 @@ run_robust_nb_regression <- function(Y_list, x, Z, side = "two_tailed", h = 15L,
   if (2/choose(length(x), sum(x)) > 5e-4) {
     warning("Your sample size may be too small for the permutation test to make any significant hits. Consider using a different method (e.g., DESeq2) or increasing your sample size.")
   }
+  side_code <- get_side_code(side)
 
   # fit null GLMs and perform precomputation
   if (is.null(precomp_list)) {
     Z_model <- cbind(1, Z)
     colnames(Z_model) <- rownames(Z_model) <- NULL
-    side_code <- get_side_code(side)
     my_offsets <- if (!is.null(size_factors)) log(size_factors) else NULL
 
     precomp_list <- lapply(X = Y_list, FUN = function(y) {

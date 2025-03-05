@@ -39,11 +39,11 @@ run_standard_nb_regression <- function(Y_list, x, Z, side = "two_tailed", alpha 
 #' @export
 run_regress_out_covariates_test <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, resid_type = c("response", "deviance", "pearson", "all")[1], theta = NULL, max_iterations = 50000L, size_factors = NULL, adaptive = TRUE, custom_permutation_list = list(), precomp_list = NULL, return_precomp = FALSE) {
   resid_types <- c("response", "deviance", "pearson")
+  side_code <- get_side_code(side)
 
   if (is.null(precomp_list)) {
     my_offsets <- if (!is.null(size_factors)) log(size_factors) else NULL
     if (!(resid_type %in% c(resid_types, "all"))) stop("Residual type not recognized.")
-    side_code <- get_side_code(side)
     # fit null GLMs and perform precomputation
     precomp_list <- lapply(X = Y_list, FUN = function(y) {
       if (is.null(theta)) {
