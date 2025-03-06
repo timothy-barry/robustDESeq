@@ -112,7 +112,7 @@ run_robust_deseq <- function(dds, side = "two_tailed", h = 15L, alpha = 0.1, siz
 #' res <- run_robust_deseq_list_interface(Y_list, x, Z)
 run_robust_deseq_list_interface <- function(Y_list, x, Z, side = "two_tailed", h = 15L, alpha = 0.1, size_factors = NULL, size_factor_estimation = "default", dispersions = NULL, dispersion_estimation = "local", max_iterations = 200000L, custom_permutation_list = list(), precomp_list = NULL, return_precomp = FALSE) {
   dds <- make_deseq_object(Y_list, x, Z)
-  out <- run_robust_deseq(dds = dds, side = side, h = h, B = B, adaptive = adaptive,
+  out <- run_robust_deseq(dds = dds, side = side, h = h,
                           alpha = alpha, size_factors = size_factors, size_factor_estimation = size_factor_estimation,
                           dispersions = dispersions, dispersion_estimation = dispersion_estimation,
                           max_iterations = max_iterations, custom_permutation_list = custom_permutation_list,
