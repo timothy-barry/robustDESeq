@@ -15,7 +15,10 @@ run_robust_deseq_list_interface(
   size_factor_estimation = "default",
   dispersions = NULL,
   dispersion_estimation = "local",
-  max_iterations = 200000L
+  max_iterations = 200000L,
+  custom_permutation_list = list(),
+  precomp_list = NULL,
+  return_precomp = FALSE
 )
 }
 \description{

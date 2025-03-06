@@ -11,7 +11,8 @@ run_robust_vgam(
   side = "two_tailed",
   h = 15L,
   alpha = 0.1,
-  max_iterations = 200000L
+  max_iterations = 200000L,
+  custom_permutation_list = list()
 )
 }
 \arguments{

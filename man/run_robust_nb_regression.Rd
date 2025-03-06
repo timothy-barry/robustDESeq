@@ -14,7 +14,11 @@ run_robust_nb_regression(
   method = "MASS",
   size_factors = NULL,
   theta = NULL,
-  max_iterations = 200000L
+  max_iterations = 200000L,
+  adaptive = TRUE,
+  custom_permutation_list = list(),
+  precomp_list = NULL,
+  return_precomp = FALSE
 )
 }
 \arguments{

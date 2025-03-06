@@ -13,7 +13,12 @@ run_regress_out_covariates_test(
   alpha = 0.1,
   resid_type = c("response", "deviance", "pearson", "all")[1],
   theta = NULL,
-  max_iterations = 50000L
+  max_iterations = 50000L,
+  size_factors = NULL,
+  adaptive = TRUE,
+  custom_permutation_list = list(),
+  precomp_list = NULL,
+  return_precomp = FALSE
 )
 }
 \arguments{
