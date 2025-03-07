@@ -11,10 +11,11 @@ using namespace Rcpp;
 List run_adaptive_permutation_test_v2(List precomp_list, IntegerVector x, int side_code, int h, double alpha, int max_iterations, std::string test_stat_str, List custom_permutation_list) {
   // define variables and objects
   int n = x.length(), m = precomp_list.length(), n_trt;
-  std::vector<bool> active_set(m, true), futility_set(m, false), rejected_set(m, false);
+  std::vector<bool> active_set(m, true), futility_set(m, false), rejected_set(m, false), curr_left_losses(m, false), curr_right_losses(m, false);
   std::vector<double> stop_times(m), original_statistics(m), p_values(m), n_right_losses(m, 0), n_left_losses(m, 0), n_losses(m, 0);
   std::vector<int> trt_idxs;
   double curr_test_stat, t = 0, h_doub = static_cast<double>(h), m_doub = static_cast<double>(m), threshold, n_in_active_set, max_n_losses_active_set;
+  bool problem_round;
 
   // select the test statistic
   double (*funct)(List, const std::vector<int>&, int) = nullptr;
@@ -65,34 +66,48 @@ List run_adaptive_permutation_test_v2(List precomp_list, IntegerVector x, int si
 
   // iterate through time
   for (int k = 0; k < max_iterations; k++) {
-    // increment time
-    t++;
+    // set problem_round flag to false
+    problem_round = false;
     // generate a random permutation
     if (!use_custom_permutations) {
       draw_wor_sample(generator, distribution_real, i_doub_array, random_samp, n_trt, n_doub);
     } else {
       random_samp = custom_permutation_list_cpp[distribution_int(generator)];
     }
-
     // iterate over hypotheses
     for (int i = 0; i < m; i ++) {
-      // if in the active set, compute the test statistic and update gamma
+      // if in the active set, compute the test statistic
       if (active_set[i]) {
         // compute the test statistic
         curr_test_stat = funct(precomp_list(i), random_samp, n_trt);
-        // determine whether we have a loss; if so, increment n_right_losses
-        n_right_losses[i] += (curr_test_stat >= original_statistics[i] ? 1.0 : 0.0);
-        n_left_losses[i] += (curr_test_stat <= original_statistics[i] ? 1.0 : 0.0);
+        if (!std::isfinite(curr_test_stat)) {
+          problem_round = true;
+          break;
+        }
+        curr_left_losses[i] = (curr_test_stat <= original_statistics[i]);
+        curr_right_losses[i] = (curr_test_stat >= original_statistics[i]);
       }
     }
 
-    // update n_losses
-    if (side_code == -1) {
-      n_losses = n_left_losses;
-    } else if (side_code == 0) {
-      for (int i = 0; i < m; i ++) n_losses[i] = std::min(n_left_losses[i], n_right_losses[i]);
+    if (problem_round) {
+      continue; // jump back to drawing wor sample
     } else {
-      n_losses = n_right_losses;
+      // increment time
+      t++;
+      // update n_losses (consider condensing this part)
+      for (int i = 0; i < m; i++) {
+        if (active_set[i]) {
+          if (curr_right_losses[i]) n_right_losses[i] ++;
+          if (curr_left_losses[i]) n_left_losses[i] ++;
+        }
+      }
+      if (side_code == -1) {
+        n_losses = n_left_losses;
+      } else if (side_code == 0) {
+        for (int i = 0; i < m; i ++) n_losses[i] = std::min(n_left_losses[i], n_right_losses[i]);
+      } else {
+        n_losses = n_right_losses;
+      }
     }
 
     // move elements from active set into futility set
