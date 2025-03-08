@@ -89,7 +89,7 @@ run_robust_nb_regression <- function(Y_list, x, Z, side = "two_tailed", h = 15L,
     out <- precomp_list
   } else {
     if (adaptive) {
-      result <- run_adaptive_permutation_test_v2(precomp_list, x, side_code, h, alpha, max_iterations, "compute_score_stat", custom_permutation_list = list())
+      result <- run_adaptive_permutation_test_v2(precomp_list, x, side_code, h, alpha, max_iterations, "compute_score_stat", custom_permutation_list = custom_permutation_list)
       out <- as.data.frame(result) |> setNames(c("p_value", "rejected", "n_losses", "stop_time"))
     } else {
       out <- run_permutation_test(precomp_list, x, side_code, 10000L, "compute_score_stat")
