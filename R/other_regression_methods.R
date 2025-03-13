@@ -80,7 +80,8 @@ run_regress_out_covariates_test <- function(Y_list, x, Z, side = "two_tailed", h
         out <- run_adaptive_permutation_test_v2(precomp_list, x, side_code, h, alpha, max_iterations, "compute_mean_over_treated_units", custom_permutation_list) |>
           as.data.frame() |> setNames(c("p_value", "rejected", "n_losses", "stop_time"))
       } else {
-        out <- run_permutation_test(precomp_list, x, side_code, 10000, "compute_mean_over_treated_units")
+        out <- run_permutation_test(precomp_list, x, side_code, max_iterations, "compute_mean_over_treated_units", custom_permutation_list) |>
+          get_rejection_df(alpha)
       }
     }
   }
